@@ -1,4 +1,4 @@
-# Krunker-hack
+# Krunker.io-hack
 Not  by me
 
 Put it in tampermonkey
