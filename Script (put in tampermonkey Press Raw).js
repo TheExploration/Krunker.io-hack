@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Krunker SkidFest
 // @description A full featured Mod menu for game Krunker.io!
-// @version 1.98
+// @version 2.05
 // @author SkidLamer - From The Gaming Gurus
 // @supportURL https://discord.gg/2uqj5Y6h7s
 // @homepage https://skidlamer.github.io/
@@ -45,6 +45,7 @@ class Utilities {
         this.downKeys = new Set();
         this.settings = null;
         this.vars = {};
+        this.skinCache = {};
         this.inputFrame = 0;
         this.renderFrame = 0;
         this.fps = 0;
@@ -125,7 +126,6 @@ class Utilities {
             newsHolder: `#newsHolder { display: none !important }`,
         };
         this.spinTimer = 1800;
-        this.skinConfig = {};
         let wait = setInterval(_ => {
             this.head = document.head||document.getElementsByTagName('head')[0]
             if (this.head) {
@@ -625,8 +625,10 @@ class Utilities {
     }
 
     onLoad() {
-        this.createSettings();
         this.deObfuscate();
+
+        this.createSettings();
+
         this.createObserver(window.instructionsUpdate, 'style', (target) => {
             if (this.settings.autoFindNew.val) {
                 console.log(target)
@@ -673,8 +675,8 @@ class Utilities {
             if (!exports) return alert("Exports not Found");
             const found = new Set();
             const array = new Map([
-                ["utility", ["commaFormatNum", "decompressKeys"]],
-                ["config", ["followURLS", "groundDecel", "idleAnimS"]],
+                ["utility", ["VectorAdd", "VectorAngleSign"]],
+                ["config", ["accAnnounce", "availableRegions", "assetCat"]],
                 ["overlay", ["render", "canvas"]],
                 ["three", ["ACESFilmicToneMapping", "TextureLoader", "ObjectLoader"]],
                 //["colors", ["challLvl", "getChallCol"]],
@@ -695,29 +697,63 @@ class Utilities {
                     })
                 })
             })
+        }).then(_=>{
+            this.ctx = this.overlay.canvas.getContext('2d');
+            this.overlay.render = new original_Proxy(this.overlay.render, {
+                apply: function(target, that, args) {
+                    return target.apply(that, args), render.apply(that, args)
+                }
+            })
+            function render(scale, game, controls, renderer, me) {
+                let width = window.utilities.overlay.canvas.width / scale;
+                let height = window.utilities.overlay.canvas.height / scale;
+                const renderArgs = [scale, game, controls, renderer, me];
+                if (renderArgs && void 0 !== window.utilities && window.utilities) {
+                    ["scale", "game", "controls", "renderer", "me"].forEach((item, index)=>{
+                        window.utilities[item] = renderArgs[index];
+                    });
+                    if (me) {
+                        window.utilities.ctx.save();
+                        window.utilities.ctx.scale(scale, scale);
+                        //window.utilities.ctx.clearRect(0, 0, width, height);
+                        window.utilities.onRender();
+                        //window.requestAnimationFrame.call(window, renderArgs.callee.caller.bind(this));
+                        window.utilities.ctx.restore();
+                    }
+                    if(window.utilities.settings && window.utilities.settings.autoClick.val && window.endUI.style.display == "none" && window.windowHolder.style.display == "none") {
+                        controls.toggle(true);
+                    }
+                }
+            }
         })
 
         // Skins
-        const orig_skins = Symbol("orig_skins");
+        const $skins = Symbol("skins");
         original_Object.defineProperty(original_Object.prototype, "skins", {
-            get() {
-                let hacked = window.utilities.settings.skinUnlock.val && this.stats;
-                if (hacked) {
-                    let hack_skins = [];
-                    for(let i = 0; i < 5000; i++) hack_skins.push({ind: i, cnt: 0x1});
-                    return hack_skins;
-                } else return this[orig_skins];
-            }, set(val) {
-                this[orig_skins] = val;
+            set: function(fn) {
+                this[$skins] = fn;
+                if (void 0 == this.localSkins || !this.localSkins.length) {
+                    this.localSkins = Array.apply(null, Array(5e3)).map((x, i) => {
+                        return {
+                            ind: i,
+                            cnt: 0x1,
+                        }
+                    })
+                }
+                return fn;
             },
-            enumerable: false
-        });
+            get: function() {
+                return window.utilities.settings.skinUnlock.val && this.stats ? this.localSkins : this[$skins];
+            }
+        })
 
         this.waitFor(_=>this.ws.connected === true, 40000).then(_=> {
             this.ws.__event = this.ws._dispatchEvent.bind(this.ws);
             this.ws.__send = this.ws.send.bind(this.ws);
-            this.ws.send = new original_Proxy(this.ws.send, {
-                apply(target, that, args) {
+            this.ws.__send("lfkr");
+            this.ws.send = new Proxy(this.ws.send, {
+                apply: function(target, that, args) {
+                    if (args[0] == "ah2") return;
                     try {
                         var original_fn = Function.prototype.apply.apply(target, [that, args]);
                     } catch (e) {
@@ -725,13 +761,8 @@ class Utilities {
                         throw e;
                     }
 
-                    if (args[0] === "ah1") {
-                        args[0] = "p";
-                        args[1] = null;
-                    }
-
                     if (args[0] === "en") {
-                        window.utilities.skinConfig = {
+                        window.utilities.skinCache = {
                             main: args[1][2][0],
                             secondary: args[1][2][1],
                             hat: args[1][3],
@@ -741,34 +772,36 @@ class Utilities {
                             waist: args[1][17],
                         }
                     }
+
                     return original_fn;
-                   // return target.apply(that, msg);
                 }
             })
 
-            this.ws._dispatchEvent = new original_Proxy(this.ws._dispatchEvent, {
-                apply(target, that, [type, msg]) {
-                    //console.log(type, msg)
+            this.ws._dispatchEvent = new Proxy(this.ws._dispatchEvent, {
+                apply: function(target, that, [type, event]) {
                     if (type =="init") {
-                        if(msg[9].bill && window.utilities.settings.customBillboard.val.length > 1) {
-                            msg[9].bill.txt = window.utilities.settings.customBillboard.val;
+                        if(event[9].bill && window.utilities.settings.customBillboard.val.length > 1) {
+                            event[9].bill.txt = window.utilities.settings.customBillboard.val;
                         }
                     }
-                    if (window.utilities.settings.skinUnlock.val && window.utilities.skinConfig && type === "0") {
-                        let playersInfo = msg[0];
-                        let perPlayerSize = 38;
-                        while (playersInfo.length % perPlayerSize !== 0) perPlayerSize++;
-                        for(let i = 0; i < playersInfo.length; i += perPlayerSize) {
-                            if (playersInfo[i] === window.utilities.ws.socketId||0) {
-                                playersInfo[i + 12] = [window.utilities.skinConfig.main, window.utilities.skinConfig.secondary];
-                                playersInfo[i + 13] = window.utilities.skinConfig.hat;
-                                playersInfo[i + 14] = window.utilities.skinConfig.body;
-                                playersInfo[i + 19] = window.utilities.skinConfig.knife;
-                                playersInfo[i + 25] = window.utilities.skinConfig.dye;
-                                playersInfo[i + 33] = window.utilities.skinConfig.waist;
+
+                    if (window.utilities.settings.skinUnlock.val && window.utilities.skinCache && type === "0") {
+                        let skins = window.utilities.skinCache;
+                        let pInfo = event[0];
+                        let pSize = 38;
+                        while (pInfo.length % pSize !== 0) pSize++;
+                        for(let i = 0; i < pInfo.length; i += pSize) {
+                            if (pInfo[i] === window.utilities.ws.socketId||0) {
+                                pInfo[i + 12] = [skins.main, skins.secondary];
+                                pInfo[i + 13] = skins.hat;
+                                pInfo[i + 14] = skins.body;
+                                pInfo[i + 19] = skins.knife;
+                                pInfo[i + 24] = skins.dye;
+                                pInfo[i + 33] = skins.waist;
                             }
                         }
                     }
+
                     return target.apply(that, arguments[2]);
                 }
             })
@@ -848,6 +881,11 @@ class Utilities {
         .set("fixHowler", [/(Howler\['orientation'](.+?)\)\),)/, ``])
         .set("respawnT", [/'\w+':0x3e8\*/g, `'respawnT':0x0*`])
         .set("anticheat", [/windows\['length'\]>\d+.*?0x25/, `0x25`])
+        .set("anticheat2", [/'save','scale','beginPath','moveTo','lineTo','stroke','fillRect','fillText','strokeText','restore'/, "'quadraticCurveTo'"])
+        .set("anticheat3", [/var \w+=!0x1;(function \w+\(\)){\w+&&!\w+&&.+?'ah2'\)\);}/, "$1{}"])
+      //  .set("anticheat2", [/(__LOADER__sharedObj\?{}:__LOADER__sharedObj;).*?;(var \w+='undefined')/, "$1 var a4 = 0; $2"])
+        //.set("render", [/(\['\w+']=function\(\w+,\w+,\w+,\w+,\w+,\w+,\w+,\w+\){)/, "$1console.log(arguments)"])
+
         //.set("FPS", [/(window\['mozRequestAnimationFrame']\|\|function\(\w+\){window\['setTimeout'])\(\w+,0x3e8\/0x3c\);/, "$1()"])
         //.set("Update", [/(\w+=window\['setTimeout']\(function\(\){\w+)\((\w+)\+(\w+)\)/, "$1($2=$3=0)"])
        // .set("weaponZoom", [/(,'zoom':)(\d.+?),/g, "$1window.utilities.settings.weaponZoom.val||$2"])
@@ -889,7 +927,7 @@ class Utilities {
         const obfu = {
             //\]\)continue;if\(!\w+\['(.+?)\']\)continue;
             inView: { regex: /(\w+\['(\w+)']\){if\(\(\w+=\w+\['\w+']\['position']\['clone']\(\))/, pos: 2 },
-
+            spectating: { regex: /\['team']:window\['(\w+)']/, pos: 1 },
             //inView: { regex: /\]\)continue;if\(!\w+\['(.+?)\']\)continue;/, pos: 1 },
             //canSee: { regex: /\w+\['(\w+)']\(\w+,\w+\['x'],\w+\['y'],\w+\['z']\)\)&&/, pos: 1 },
             //procInputs: { regex: /this\['(\w+)']=function\((\w+),(\w+),\w+,\w+\){(this)\['recon']/, pos: 1 },
@@ -1444,6 +1482,22 @@ class Utilities {
                     let string = args[args.length - 1];
 
                     if (string.length > 38e5) {
+/*
+                        let match = string.match(/\['team']:window\['(\w+)']/);
+                        if (match && match[1]) {
+                            original_Object.defineProperty(window, match[1], {
+                                get : function() {
+                                    (function() {
+                                        let caller = arguments.callee.caller.caller;
+                                        if (caller && caller.arguments && caller.arguments.length == 3)
+                                            console.log(caller.arguments[2])
+                                    })();
+
+                                    return false;
+                                }
+                            });
+                        } else throw(new Error("initial Hook Not Found"));
+*/
                         window.utilities = new Utilities(string);
                         string = window.utilities.patchScript();
                     }
@@ -1460,6 +1514,7 @@ class Utilities {
             }
         })
 
+        /*
         CanvasRenderingContext2D.prototype.clearRect = function(x, y, width, height) {
             original_clearRect.apply(this, [x, y, width, height]);
             if (void 0 !== window.utilities) window.utilities.ctx = this;
@@ -1481,7 +1536,7 @@ class Utilities {
                     }
                 }
             })();
-        }
+        }*/
     }
     let observer = new MutationObserver(mutations => {
         for (let mutation of mutations) {
