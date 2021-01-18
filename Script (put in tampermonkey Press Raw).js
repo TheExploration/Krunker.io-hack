@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name          Krunker SkidFest
 // @description   A full featured Mod menu for game Krunker.io!
-// @version       2.15
+// @version       2.17
 // @author        SkidLamer - From The Gaming Gurus
 // @supportURL    https://discord.gg/AJFXXACdrF
 // @homepage      https://skidlamer.github.io/
-// @icon64        https://i.imgur.com/PPGAhg0.png
+// @iconURL       https://i.imgur.com/MqW6Ufx.png
 // @match         *://krunker.io/*
 // @exclude       *://krunker.io/editor*
 // @exclude       *://krunker.io/social*
@@ -129,7 +129,7 @@ class Utilities {
             if (this.head) {
                 clearInterval(wait);
                 Object.entries(this.css).forEach(entry => {
-                    this.css[entry[0]] = this.createElement("style", entry[1])
+                    this.css[entry[0]] = this.createElement("style", entry[1]);
                 })
                 this.onLoad();
             }
@@ -196,8 +196,19 @@ class Utilities {
     createSettings() {
         this.settings = {
             //Rendering
-            hideAdverts: {
+            showSkidBtn: {
                 pre: "<div class='setHed'>Rendering</div>",
+                name: "Show Skid Button",
+                val: true,
+                html: () => this.generateSetting("checkbox", "showSkidBtn", this),
+                set: (value, init) => {
+                    let button = document.getElementById("mainButton");
+                    if (!button) {
+                        button = this.createButton("5k1D", "https://i.imgur.com/1tWAEJx.gif", this.toggleMenu, value)
+                    } else button.style.display = value ? "inherit" : "none";
+                }
+            },
+            hideAdverts: {
                 name: "Hide Advertisments",
                 val: true,
                 html: () => this.generateSetting("checkbox", "hideAdverts", this),
@@ -465,9 +476,7 @@ class Utilities {
                     return tmpHTML;
                 };
                 clearInterval(waitForWindows);
-                this.createButton("5k1D", "https://i.imgur.com/1tWAEJx.gif", () => {
-                    this.toggleMenu()
-                })
+                //this.createButton("5k1D", "https://i.imgur.com/1tWAEJx.gif", this.toggleMenu)
             }
         }, 100);
 
@@ -534,25 +543,40 @@ class Utilities {
         elm.addEventListener(type, event => callback(event));
     }
 
-    createElement(type, html, id, className) {
-        let newElement = document.createElement(type)
-        if (id) newElement.id = id
-        if (className) newElement.className = className;
-        if (html) newElement.innerHTML = html;
-        return newElement
+    createElement(element, attribute, inner) {
+        if (!this.isDefined(element)) {
+            return null;
+        }
+        if (!this.isDefined(inner)) {
+            inner = "";
+        }
+        let el = document.createElement(element);
+        if (this.isType(attribute, 'object')) {
+            for (let key in attribute) {
+                el.setAttribute(key, attribute[key]);
+            }
+        }
+        if (!Array.isArray(inner)) {
+            inner = [inner];
+        }
+        for (let i = 0; i < inner.length; i++) {
+            if (inner[i].tagName) {
+                el.appendChild(inner[i]);
+            } else {
+                el.appendChild(document.createTextNode(inner[i]));
+            }
+        }
+        return el;
     }
 
-    createButton(name, iconURL, fn) {
+    createButton(name, iconURL, fn, visible) {
+        visible = visible ? "inherit":"none";
         let menu = document.querySelector("#menuItemContainer");
-        let host = this.createElement("div", null, null, "menuItem");
-        let title = this.createElement("div", name, null, "menuItemTitle");
-        let icon = this.createElement("div", null, null, "menuItemIcon");
-        icon.style.backgroundImage = `url("${iconURL}")`
-        host.append(icon, title)
-        menu.append(host)
-        if (fn && this.isType(fn, "function")) host.addEventListener("click", fn)
+        let icon = this.createElement("div",{"class":"menuItemIcon", "style":`background-image:url("${iconURL}");display:inherit;`});
+        let title= this.createElement("div",{"class":"menuItemTitle", "style":`display:inherit;`}, name);
+        let host = this.createElement("div",{"id":"mainButton", "class":"menuItem", "onmouseenter":"playTick()", "onclick":"showWindow(12)", "style":`display:${visible};`},[icon, title]);
+        if (menu) menu.append(host)
     }
-
 
     objectEntries(object, callback) {
         let descriptors = Object.getOwnPropertyDescriptors(object);
@@ -620,51 +644,10 @@ class Utilities {
     }
 
     onLoad() {
+
         this.deObfuscate();
-
         this.createSettings();
-
-        this.createObserver(window.instructionsUpdate, 'style', (target) => {
-            if (this.settings.autoFindNew.val) {
-                console.log(target)
-                if (['Kicked', 'Banned', 'Disconnected', 'Error', 'Game is full'].some(text => target && target.innerHTML.includes(text))) {
-                    location = document.location.origin;
-                }
-            }
-        });
-
-        this.createListener(document, "keyup", event => {
-            if (this.downKeys.has(event.code)) this.downKeys.delete(event.code)
-        })
-
-        this.createListener(document, "keydown", event => {
-            if (event.code == "F1") {
-                event.preventDefault();
-                this.toggleMenu();
-            }
-            if ('INPUT' == document.activeElement.tagName || !window.endUI && window.endUI.style.display) return;
-            switch (event.code) {
-                case 'NumpadSubtract':
-                    document.exitPointerLock();
-                    //console.log(document.exitPointerLock)
-                    console.dirxml(this)
-                    break;
-                default:
-                    if (!this.downKeys.has(event.code)) this.downKeys.add(event.code);
-                    break;
-            }
-        })
-
-        this.createListener(document, "mouseup", event => {
-            switch (event.button) {
-                case 1:
-                    event.preventDefault();
-                    this.toggleMenu();
-                    break;
-                default:
-                    break;
-            }
-        })
+        this.createObservers();
 
         this.waitFor(_=>this.exports).then(exports => {
             if (!exports) return alert("Exports not Found");
@@ -846,7 +829,7 @@ class Utilities {
         .set("respawnT", [/'\w+':0x3e8\*/g, `'respawnT':0x0*`])
 
         .set("videoAds", [/!function\(\){var \w+=document\['createElement']\('script'\);.*?}\(\);/, ""])
-        .set("frustum", [/(;const (\w+)=this\['frustum']\['containsPoint'];.*?return)!0x1/, "$1 $2"])
+        //.set("frustum", [/(;const (\w+)=this\['frustum']\['containsPoint'];.*?return)!0x1/, "$1 $2"])
 
         //.set("anticheat#0", [/Object\['defineProperty']\(window,'setTimeout'.*?(var \w+='undefined')/, "$1"])
         //.set("anticheat#1", [/Object\['defineProperty']\(navigator.*?;(var \w+=)/, "$1"])
@@ -944,6 +927,50 @@ class Utilities {
         console.groupEnd();
     }
 
+    createObservers() {
+        this.createObserver(window.instructionsUpdate, 'style', (target) => {
+            if (this.settings.autoFindNew.val) {
+                console.log(target)
+                if (['Kicked', 'Banned', 'Disconnected', 'Error', 'Game is full'].some(text => target && target.innerHTML.includes(text))) {
+                    location = document.location.origin;
+                }
+            }
+        });
+
+        this.createListener(document, "keyup", event => {
+            if (this.downKeys.has(event.code)) this.downKeys.delete(event.code)
+        })
+
+        this.createListener(document, "keydown", event => {
+            if (event.code == "F1") {
+                event.preventDefault();
+                this.toggleMenu();
+            }
+            if ('INPUT' == document.activeElement.tagName || !window.endUI && window.endUI.style.display) return;
+            switch (event.code) {
+                case 'NumpadSubtract':
+                    document.exitPointerLock();
+                    //console.log(document.exitPointerLock)
+                    console.dirxml(this)
+                    break;
+                default:
+                    if (!this.downKeys.has(event.code)) this.downKeys.add(event.code);
+                    break;
+            }
+        })
+
+        this.createListener(document, "mouseup", event => {
+            switch (event.button) {
+                case 1:
+                    event.preventDefault();
+                    this.toggleMenu();
+                    break;
+                default:
+                    break;
+            }
+        })
+    }
+
     onRender() { /* hrt / ttap - https://github.com/hrt */
         this.renderFrame ++;
         if (this.renderFrame >= 100000) this.renderFrame = 0;
@@ -953,18 +980,6 @@ class Utilities {
         let worldPosition = this.renderer.camera[this.vars.getWorldPosition]();
         let espVal = this.settings.renderESP.val;
         if (espVal ==="walls"||espVal ==="twoD") this.nameTags = undefined; else this.nameTags = true;
-
-        if (this.isNative(this.renderer.frustum.containsPoint)) {
-            this.renderer.frustum.containsPoint = function (point) {
-                let planes = this.planes;
-                for (let i = 0; i < 6; i ++) {
-                    if (planes[i].distanceToPoint(point) < 0) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
 
         if (this.settings.autoActivateNuke.val && this.me && Object.keys(this.me.streaks).length) { /*chonker*/
             this.ws.__send("k", 0);
@@ -994,7 +1009,7 @@ class Utilities {
                             position.x += j * playerScale;
                             position.z += k * playerScale;
                             position.y += l * (player.height - player[this.vars.crouchVal] * this.consts.crouchDst);
-                            if (!this.renderer.frustum.containsPoint(position)) {
+                            if (!this.containsPoint(position)) {
                                 br = true;
                                 break;
                             }
@@ -1106,7 +1121,7 @@ class Utilities {
                     let chamsEnabled = chamColor !== "off";
                     if (child && child.type == "Mesh" && child.material) {
                         child.material.depthTest = chamsEnabled ? false : true;
-                        if (this.isDefined(child.material.fog)) child.material.fog = chamsEnabled ? false : true;
+                        //if (this.isDefined(child.material.fog)) child.material.fog = chamsEnabled ? false : true;
                         if (child.material.emissive) {
                             child.material.emissive.r = chamColor == 'off' || chamColor == 'teal' || chamColor == 'green' || chamColor == 'blue' ? 0 : 0.55;
                             child.material.emissive.g = chamColor == 'off' || chamColor == 'purple' || chamColor == 'blue' || chamColor == 'red' ? 0 : 0.55;
@@ -1136,14 +1151,14 @@ class Utilities {
             return undefined !== enemy.mesh && enemy.mesh && enemy.mesh.children[0] && enemy.canBSeen && enemy.health > 0
         }).sort((p1, p2) => this.getD3D(this.me.x, this.me.z, p1.x, p1.z) - this.getD3D(this.me.x, this.me.z, p2.x, p2.z)).shift();
         if (target) {
-            let canSee = this.renderer.frustum.containsPoint(target.mesh.position)
+            let canSee = this.containsPoint(target.mesh.position)
             let yDire = (this.getDir(this.me.z, this.me.x, target.z, target.x) || 0)
             let xDire = ((this.getXDire(this.me.x, this.me.y, this.me.z, target.x, target.y + target.mesh.children[0].scale.y * 0.85, target.z) || 0) - this.consts.recoilMlt * this.me[this.vars.recoilAnimY])
             if (this.me.weapon[this.vars.nAuto] && this.me[this.vars.didShoot]) { input[this.key.shoot] = 0; input[this.key.scope] = 0; this.me.inspecting = false; this.me.inspectX = 0; }
             else {
                 if (!this.me.aimDir && canSee) {
                     input[this.key.scope] = 1;
-                    if (!this.me[this.vars.aimVal]) {
+                    if (!this.me[this.vars.aimVal]||this.me.weapon.noAim) {
                         input[this.key.shoot] = 1;
                         input[this.key.ydir] = yDire * 1e3
                         input[this.key.xdir] = xDire * 1e3
@@ -1179,11 +1194,11 @@ class Utilities {
             }
 
             let isMelee = this.isDefined(this.me.weapon.melee)&&this.me.weapon.melee||this.isDefined(this.me.weapon.canThrow)&&this.me.weapon.canThrow;
+            let ammoLeft = this.me[this.vars.ammos][this.me[this.vars.weaponIndex]];
 
             // autoReload
             if (this.settings.autoReload.val) {
-                let ammoLeft = this.me[this.vars.ammos][this.me[this.vars.weaponIndex]];
-                let capacity = this.me.weapon.ammo;
+                //let capacity = this.me.weapon.ammo;
                 //if (ammoLeft < capacity)
                 if (isMelee) {
                     if (!this.me.canThrow) {
@@ -1232,7 +1247,7 @@ class Utilities {
                     //    input[2] = this.me[this.vars.xDire] + Math.PI;
                     //} else console.log("spins ", count);
                     //target.jumpBobY * this.config.jumpVel
-                    let canSee = this.renderer.frustum.containsPoint(target[this.vars.objInstances].position);
+                    let canSee = this.containsPoint(target[this.vars.objInstances].position);
                     let inCast = this.rayC.intersectObjects(this.playerMaps, true).length;
                     let yDire = (this.getDir(this.me.z, this.me.x, target.z, target.x) || 0);
                     let xDire = ((this.getXDire(this.me.x, this.me.y, this.me.z, target.x, target.y - target[this.vars.crouchVal] * this.consts.crouchDst + this.me[this.vars.crouchVal] * this.consts.crouchDst, target.z) || 0) - this.consts.recoilMlt * this.me[this.vars.recoilAnimY])
@@ -1243,13 +1258,12 @@ class Utilities {
                         this.me.inspectX = 0;
                     }
                     else if (!canSee && this.settings.frustrumCheck.val) this.resetLookAt();
-                    else {
+                    else if (ammoLeft||isMelee) {
                         input[this.key.scope] = this.settings.autoAim.val === "assist"||this.settings.autoAim.val === "correction"||this.settings.autoAim.val === "trigger" ? this.controls[this.vars.mouseDownR] : 0;
-                        if (this.me.weapon.name == 'Akimbo Uzi') this.me[this.vars.aimVal] = input[this.key.scope];
                         switch (this.settings.autoAim.val) {
                             case "quickScope":
                                 input[this.key.scope] = 1;
-                                if (!this.me[this.vars.aimVal]) {
+                                if (!this.me[this.vars.aimVal]||this.me.weapon.noAim) {
                                     if (!this.me.canThrow||!isMelee) input[this.key.shoot] = 1;
                                     input[this.key.ydir] = yDire * 1e3
                                     input[this.key.xdir] = xDire * 1e3
@@ -1266,7 +1280,7 @@ class Utilities {
                                 }
                                 break;
                             case "silent":
-                                if (!this.me[this.vars.aimVal]) {
+                                if (!this.me[this.vars.aimVal]||this.me.weapon.noAim) {
                                     if (!this.me.canThrow||!isMelee) input[this.key.shoot] = 1;
                                 } else input[this.key.scope] = 1;
                                 input[this.key.ydir] = yDire * 1e3
@@ -1329,6 +1343,16 @@ class Utilities {
 
     getDistance(x1, y1, x2, y2) {
         return Math.sqrt((x2 -= x1) * x2 + (y2 -= y1) * y2);
+    }
+
+    containsPoint(point) {
+        let planes = this.renderer.frustum.planes;
+        for (let i = 0; i < 6; i ++) {
+            if (planes[i].distanceToPoint(point) < 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     getCanSee(from, toX, toY, toZ, boxSize) {
@@ -1408,6 +1432,8 @@ window.Function = new Proxy(Function, {
         if (args.length) {
             let body = args[args.length - 1];
             if (body.length > 38e5) {
+                window.utilities = new Utilities(body);
+                body = window.utilities.patchScript();
                 // game.js at game loader
                 //console.log(body)
             }
@@ -1425,10 +1451,8 @@ window.Function = new Proxy(Function, {
                         for(let name in fnArgs[1]) {
                             window.WASM[name] = fnArgs[1][name];
                             switch (name) {
-                                case "fetchCallback": //game.js after fetch and decode
+                                case "fetchCallback": //game.js after fetch and not decoded
                                     fnArgs[1][name] = function(body) {
-                                        window.utilities = new Utilities(body);
-                                        body = window.utilities.patchScript();
                                         return window.WASM[name].apply(this, [body]);
                                     };
                                     break;
