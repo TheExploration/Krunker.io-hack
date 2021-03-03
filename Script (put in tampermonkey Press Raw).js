@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Krunker SkidFest
 // @description   A full featured Mod menu for game Krunker.io!
-// @version       2.31
+// @version       v3.6.9
 // @author        SkidLamer - From The Gaming Gurus
 // @supportURL    https://skidlamer.github.io/wp
 // @homepage      https://skidlamer.github.io/
@@ -532,7 +532,11 @@
                     tmpHTML += "<div class='settName' id='" + key + "_div' style='display:" + (this.settings[key].hide ? 'none' : 'block') + "'>" + this.settings[key].name +
                         " " + this.settings[key].html() + "</div>";
                 }
-                tmpHTML += `<br><hr><a onclick='${skidStr}.resetSettings()' class='menuLink'>Reset Settings</a> | <a onclick='${skidStr}.saveScript()' class='menuLink'>Save GameScript</a>`
+                tmpHTML += '<br><hr>'
+                tmpHTML += `<button type="button" autofocus onclick="${skidStr}.saveScript()">Save GameScript</button>&nbsp;`
+                tmpHTML += `<button type="button" autofocus onclick="${skidStr}.saveStyleSheet()">Save StyleSheet</button>&nbsp;`
+                tmpHTML += `<button type="button" autofocus onclick="${skidStr}.resetSettings()">Reset Settings</button>&nbsp;`
+                tmpHTML += `<button type="button" autofocus onclick="window.open('https://skidlamer.github.io/wp')">Contact GamingGurus</button>`
                 return tmpHTML;
             };
 
@@ -661,6 +665,23 @@
             })
         }
 
+        saveStyleSheet() {
+            new Array(...document.styleSheets).map(css => {
+                if (css.href) {
+                    let arr = /http.*?krunker.io\/css\/(\w+.css).+/.exec(css.href);
+                    if (arr && arr[1]) {
+                        let name = arr[1];
+                        if (name && name.includes("main")) {
+                            let cssText = Array.from(css.cssRules).reduce((prev, cssRule) => {
+                                return prev + '\n' + cssRule.cssText
+                            }, '')
+                            this.saveAs(name, cssText);
+                        }
+                    }
+                }
+            })
+        }
+
         isKeyDown(key) {
             return this.downKeys.has(key);
         }
@@ -705,6 +726,15 @@
             this.waitFor(_=>document.documentElement instanceof window.HTMLElement).then(_=>{
                 this.iframe();
             })
+
+            // Anticheat
+            Object.prototype.hasOwnProperty = new Proxy(Object.prototype.hasOwnProperty, {
+                apply: function(target, that, args) {
+                    let bool = Reflect.apply(...arguments);
+                    return that == localStorage && args[0].includes("kro_utilities_") ? false : bool;
+               }
+            })
+
             this.createObservers();
             this.waitFor(_=>this.head, 1e4, _=> { this.head = document.head||document.getElementsByTagName('head')[0] }).then(head => {
                 if (!head) location.reload();
@@ -719,10 +749,15 @@
             this.waitFor(_=>this.token).then(_ => {
                 //this.saveScript();
                 if (!this.token) location.reload();
+                if (GM.info.script.version !== this.getVersion()) {
+                    alert("This Script Needs Updating by Skidlamer, visit The GamingGurus Discord");
+                    return window.location.assign("https://skidlamer.github.io/wp");
+                }
+
                 const loader = new Function("WP_fetchMMToken", "Module", this.gamePatch());
                 loader(new Promise(res=>res(this.token)), { csv: async () => 0 });
             })
-            this.waitFor(_=>this.exports, 1e4).then(exports => {
+            this.waitFor(_=>this.exports, 2e4).then(exports => {
                 if (!exports) return alert("This Script needs updating");
                 else {
                     //console.dir(exports)
@@ -818,6 +853,7 @@
                                     }
 
                                     if (args[0] === "en") {
+                                        args[ args.length - 1 ] = false; // AntiPedo
                                         skid.skinCache = {
                                             main: args[1][2][0],
                                             secondary: args[1][2][1],
@@ -836,6 +872,7 @@
                             this.ws._dispatchEvent = new Proxy(this.ws._dispatchEvent, {
                                 apply: function(target, that, [type, event]) {
                                     if (type =="init") {
+                                        //console.log(event)
                                         if(event[10] && event[10].length && event[10].bill && skid.settings.customBillboard.val.length > 1) {
                                             event[10].bill.txt = skid.settings.customBillboard.val;
                                         }
@@ -926,9 +963,9 @@
                 anticheat1:{regex: /&&\w+\(\),window\['utilities']&&\(\w+\(null,null,null,!0x0\),\w+\(\)\)/, patch: ""},
                 anticheat2:{regex: /(\[]instanceof Array;).*?(var)/, patch: "$1 $2"},
                 anticheat3:{regex: /windows\['length'\]>\d+.*?0x25/, patch: `0x25`},
-                anticheat4:{regex: /(\w+\=)\(!menuItemContainer\['innerHTML']\['includes'].*?\);/, patch: `$1false;`},
-                //dafuck:{regex: /else{if\('\w+'!==\w+\){if\('';.*?}}\)/, patch: ")"},
-               // dafunk:{regex: /\(\w+\)\)(\w+=new \w+\(\)\['parse)/, patch: "$1"},
+                //anticheat4:{regex: /(\w+\=)\(!menuItemContainer\['innerHTML']\['includes'].*?\);/, patch: `$1false;`},
+                kpal:{regex: /1tWAEJx/g, patch: `Kpal_Is_A_Pedo`},
+                kpal2:{regex: /jjkFpnV/g, patch: `Stop_Watching_Lolicon_Pedo`},
                 commandline:{regex: /Object\['defineProperty']\(console.*?\),/, patch: ""},
                 writeable:{regex: /'writeable':!0x1/g, patch: "writeable:true"},
                 configurable:{regex: /'configurable':!0x1/g, patch: "configurable:true"},
