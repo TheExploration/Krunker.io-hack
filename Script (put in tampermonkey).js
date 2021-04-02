@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Krunker SkidFest
 // @description   A full featured Mod menu for game Krunker.io!
-// @version       3.7.8
+// @version       3.7.9
 // @author        SkidLamer - From The Gaming Gurus
 // @supportURL    https://skidlamer.github.io/wp
 // @homepage      https://skidlamer.github.io/
@@ -22,6 +22,7 @@
 // BTC:  3CsDVq96KgmyPjktUe1YgVSurJVe7LT53G
 // ETH:  0x5dbF713F95F7777c84e6EFF5080e2f0e0724E8b1
 // ETC:  0xF59BEbe25ECe2ac3373477B5067E07F2284C70f3
+// Amazon Giftcard - skidlamer@mail.com
 
 (function(skidStr, CRC2d, skid) {
 
