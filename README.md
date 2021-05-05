@@ -4,4 +4,4 @@ Not  by me
 
 Put it in tampermonkey
 
-Middle mouse button/F1 for hack menu
+F1 for hack menu
