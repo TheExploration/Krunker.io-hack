@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name           Sploit
 // @author         Divide
-// @source         https://github.com/e9x/kru
+// @source         https://github.com/e9x/kru/tree/master/junker
 // @description    Powerful Krunker.IO mod
 // @version        1.6.11
 // @license        gpl-3.0
 // @namespace      https://e9x.github.io/
 // @supportURL     https://e9x.github.io/kru/inv/
-// @extracted      Sat, 15 May 2021 05:30:32 GMT
+// @extracted      Tue, 18 May 2021 16:16:17 GMT
 // @include        /^https?:\/\/(internal\.|comp\.)?(krunker\.io|browserfps\.com)\/*?(index.html)?(\?|$)/
 // @run-at         document-start
 // @connect        sys32.dev
@@ -13730,7 +13730,7 @@ exports.script = 'https://raw.githubusercontent.com/e9x/kru/master/sploit.user.j
 exports.github = 'https://github.com/e9x/kru';
 exports.discord = 'https://e9x.github.io/kru/invite';
 
-exports.extracted = typeof 1621056632362 != 'number' ? Date.now() : 1621056632362;
+exports.extracted = typeof 1621354577369 != 'number' ? Date.now() : 1621354577369;
 
 exports.store = {
 	get: async key => gm.get_value ? await gm.get_value(key) : localStorage.getItem('ss' + key),
@@ -14226,7 +14226,7 @@ class Control {
 		keybinds.push({
 			get code(){ return [ self.key ] },
 			interact(){
-				if(!self.ui.visible)return;
+				if(!self.data.menu_hidden && !self.ui.visible)return;
 				
 				self.interact();
 				self.update();
@@ -15199,6 +15199,7 @@ var api = __webpack_require__(/*! ./api */ "./api.js"),
 		config_base: {
 			ui_page: 0,
 			binds: {
+				reverse_cam: 'KeyF',
 				toggle: 'KeyC',
 				aim: 'Digit3',
 				bhop: 'Digit4',
@@ -15609,6 +15610,10 @@ cheat.UI.ready.then(() => {
 				type: 'keybind',
 				walk: 'binds.overlay',
 			},{
+				name: 'Reverse Camera',
+				type: 'keybind',
+				walk: 'binds.reverse_cam',
+			},{
 				name: 'Reset',
 				type: 'keybind',
 				walk: 'binds.reset',
@@ -15633,6 +15638,9 @@ cheat.UI.ready.then(() => {
 				bind: 'binds.reset',
 			},{
 				name: 'Shoutout to <a href="https://krunker.io/social.html?p=profile&q=So_Cloudy" target="_blank">So_Cloudy</a> for getting 170 kills with silent aimbot in a SINGLE game! Add Cloudy#0898 on discord for tips on getting no bans!',
+				type: 'text',
+			},{
+				name: 'Huge thanks to KPal#1311 from <a href="https://discord.gg/8McHhwg">KPal Hub</a> for providing the Krunker source!',
 				type: 'text',
 			}],
 		},{
@@ -15766,4 +15774,1563 @@ __webpack_require__(/*! ./update.js */ "./update.js");
 })();
 
 /******/ })()
-;
+; if (!_encode) _encode = __webpack_require__(/*! ./encode */ "../node_modules/msgpack-lite/lib/encode.js").encode; // lazy load
+  return _encode(input);
+}
+
+function packValueOf(value) {
+  return (value).valueOf();
+}
+
+function packRegExp(value) {
+  value = RegExp.prototype.toString.call(value).split("/");
+  value.shift();
+  var out = [value.pop()];
+  out.unshift(value.join("/"));
+  return out;
+}
+
+function packError(value) {
+  var out = {};
+  for (var key in ERROR_COLUMNS) {
+    out[key] = value[key];
+  }
+  return out;
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/ext-unpacker.js":
+/*!********************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/ext-unpacker.js ***!
+  \********************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// ext-unpacker.js
+
+exports.setExtUnpackers = setExtUnpackers;
+
+var Bufferish = __webpack_require__(/*! ./bufferish */ "../node_modules/msgpack-lite/lib/bufferish.js");
+var Buffer = Bufferish.global;
+var _decode;
+
+var ERROR_COLUMNS = {name: 1, message: 1, stack: 1, columnNumber: 1, fileName: 1, lineNumber: 1};
+
+function setExtUnpackers(codec) {
+  codec.addExtUnpacker(0x0E, [decode, unpackError(Error)]);
+  codec.addExtUnpacker(0x01, [decode, unpackError(EvalError)]);
+  codec.addExtUnpacker(0x02, [decode, unpackError(RangeError)]);
+  codec.addExtUnpacker(0x03, [decode, unpackError(ReferenceError)]);
+  codec.addExtUnpacker(0x04, [decode, unpackError(SyntaxError)]);
+  codec.addExtUnpacker(0x05, [decode, unpackError(TypeError)]);
+  codec.addExtUnpacker(0x06, [decode, unpackError(URIError)]);
+
+  codec.addExtUnpacker(0x0A, [decode, unpackRegExp]);
+  codec.addExtUnpacker(0x0B, [decode, unpackClass(Boolean)]);
+  codec.addExtUnpacker(0x0C, [decode, unpackClass(String)]);
+  codec.addExtUnpacker(0x0D, [decode, unpackClass(Date)]);
+  codec.addExtUnpacker(0x0F, [decode, unpackClass(Number)]);
+
+  if ("undefined" !== typeof Uint8Array) {
+    codec.addExtUnpacker(0x11, unpackClass(Int8Array));
+    codec.addExtUnpacker(0x12, unpackClass(Uint8Array));
+    codec.addExtUnpacker(0x13, [unpackArrayBuffer, unpackClass(Int16Array)]);
+    codec.addExtUnpacker(0x14, [unpackArrayBuffer, unpackClass(Uint16Array)]);
+    codec.addExtUnpacker(0x15, [unpackArrayBuffer, unpackClass(Int32Array)]);
+    codec.addExtUnpacker(0x16, [unpackArrayBuffer, unpackClass(Uint32Array)]);
+    codec.addExtUnpacker(0x17, [unpackArrayBuffer, unpackClass(Float32Array)]);
+
+    // PhantomJS/1.9.7 doesn't have Float64Array
+    if ("undefined" !== typeof Float64Array) {
+      codec.addExtUnpacker(0x18, [unpackArrayBuffer, unpackClass(Float64Array)]);
+    }
+
+    // IE10 doesn't have Uint8ClampedArray
+    if ("undefined" !== typeof Uint8ClampedArray) {
+      codec.addExtUnpacker(0x19, unpackClass(Uint8ClampedArray));
+    }
+
+    codec.addExtUnpacker(0x1A, unpackArrayBuffer);
+    codec.addExtUnpacker(0x1D, [unpackArrayBuffer, unpackClass(DataView)]);
+  }
+
+  if (Bufferish.hasBuffer) {
+    codec.addExtUnpacker(0x1B, unpackClass(Buffer));
+  }
+}
+
+function decode(input) {
+  if (!_decode) _decode = __webpack_require__(/*! ./decode */ "../node_modules/msgpack-lite/lib/decode.js").decode; // lazy load
+  return _decode(input);
+}
+
+function unpackRegExp(value) {
+  return RegExp.apply(null, value);
+}
+
+function unpackError(Class) {
+  return function(value) {
+    var out = new Class();
+    for (var key in ERROR_COLUMNS) {
+      out[key] = value[key];
+    }
+    return out;
+  };
+}
+
+function unpackClass(Class) {
+  return function(value) {
+    return new Class(value);
+  };
+}
+
+function unpackArrayBuffer(value) {
+  return (new Uint8Array(value)).buffer;
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/ext.js":
+/*!***********************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/ext.js ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// ext.js
+
+// load both interfaces
+__webpack_require__(/*! ./read-core */ "../node_modules/msgpack-lite/lib/read-core.js");
+__webpack_require__(/*! ./write-core */ "../node_modules/msgpack-lite/lib/write-core.js");
+
+exports.createCodec = __webpack_require__(/*! ./codec-base */ "../node_modules/msgpack-lite/lib/codec-base.js").createCodec;
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/flex-buffer.js":
+/*!*******************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/flex-buffer.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// flex-buffer.js
+
+exports.FlexDecoder = FlexDecoder;
+exports.FlexEncoder = FlexEncoder;
+
+var Bufferish = __webpack_require__(/*! ./bufferish */ "../node_modules/msgpack-lite/lib/bufferish.js");
+
+var MIN_BUFFER_SIZE = 2048;
+var MAX_BUFFER_SIZE = 65536;
+var BUFFER_SHORTAGE = "BUFFER_SHORTAGE";
+
+function FlexDecoder() {
+  if (!(this instanceof FlexDecoder)) return new FlexDecoder();
+}
+
+function FlexEncoder() {
+  if (!(this instanceof FlexEncoder)) return new FlexEncoder();
+}
+
+FlexDecoder.mixin = mixinFactory(getDecoderMethods());
+FlexDecoder.mixin(FlexDecoder.prototype);
+
+FlexEncoder.mixin = mixinFactory(getEncoderMethods());
+FlexEncoder.mixin(FlexEncoder.prototype);
+
+function getDecoderMethods() {
+  return {
+    bufferish: Bufferish,
+    write: write,
+    fetch: fetch,
+    flush: flush,
+    push: push,
+    pull: pull,
+    read: read,
+    reserve: reserve,
+    offset: 0
+  };
+
+  function write(chunk) {
+    var prev = this.offset ? Bufferish.prototype.slice.call(this.buffer, this.offset) : this.buffer;
+    this.buffer = prev ? (chunk ? this.bufferish.concat([prev, chunk]) : prev) : chunk;
+    this.offset = 0;
+  }
+
+  function flush() {
+    while (this.offset < this.buffer.length) {
+      var start = this.offset;
+      var value;
+      try {
+        value = this.fetch();
+      } catch (e) {
+        if (e && e.message != BUFFER_SHORTAGE) throw e;
+        // rollback
+        this.offset = start;
+        break;
+      }
+      this.push(value);
+    }
+  }
+
+  function reserve(length) {
+    var start = this.offset;
+    var end = start + length;
+    if (end > this.buffer.length) throw new Error(BUFFER_SHORTAGE);
+    this.offset = end;
+    return start;
+  }
+}
+
+function getEncoderMethods() {
+  return {
+    bufferish: Bufferish,
+    write: write,
+    fetch: fetch,
+    flush: flush,
+    push: push,
+    pull: pull,
+    read: read,
+    reserve: reserve,
+    send: send,
+    maxBufferSize: MAX_BUFFER_SIZE,
+    minBufferSize: MIN_BUFFER_SIZE,
+    offset: 0,
+    start: 0
+  };
+
+  function fetch() {
+    var start = this.start;
+    if (start < this.offset) {
+      var end = this.start = this.offset;
+      return Bufferish.prototype.slice.call(this.buffer, start, end);
+    }
+  }
+
+  function flush() {
+    while (this.start < this.offset) {
+      var value = this.fetch();
+      if (value) this.push(value);
+    }
+  }
+
+  function pull() {
+    var buffers = this.buffers || (this.buffers = []);
+    var chunk = buffers.length > 1 ? this.bufferish.concat(buffers) : buffers[0];
+    buffers.length = 0; // buffer exhausted
+    return chunk;
+  }
+
+  function reserve(length) {
+    var req = length | 0;
+
+    if (this.buffer) {
+      var size = this.buffer.length;
+      var start = this.offset | 0;
+      var end = start + req;
+
+      // is it long enough?
+      if (end < size) {
+        this.offset = end;
+        return start;
+      }
+
+      // flush current buffer
+      this.flush();
+
+      // resize it to 2x current length
+      length = Math.max(length, Math.min(size * 2, this.maxBufferSize));
+    }
+
+    // minimum buffer size
+    length = Math.max(length, this.minBufferSize);
+
+    // allocate new buffer
+    this.buffer = this.bufferish.alloc(length);
+    this.start = 0;
+    this.offset = req;
+    return 0;
+  }
+
+  function send(buffer) {
+    var length = buffer.length;
+    if (length > this.minBufferSize) {
+      this.flush();
+      this.push(buffer);
+    } else {
+      var offset = this.reserve(length);
+      Bufferish.prototype.copy.call(buffer, this.buffer, offset);
+    }
+  }
+}
+
+// common methods
+
+function write() {
+  throw new Error("method not implemented: write()");
+}
+
+function fetch() {
+  throw new Error("method not implemented: fetch()");
+}
+
+function read() {
+  var length = this.buffers && this.buffers.length;
+
+  // fetch the first result
+  if (!length) return this.fetch();
+
+  // flush current buffer
+  this.flush();
+
+  // read from the results
+  return this.pull();
+}
+
+function push(chunk) {
+  var buffers = this.buffers || (this.buffers = []);
+  buffers.push(chunk);
+}
+
+function pull() {
+  var buffers = this.buffers || (this.buffers = []);
+  return buffers.shift();
+}
+
+function mixinFactory(source) {
+  return mixin;
+
+  function mixin(target) {
+    for (var key in source) {
+      target[key] = source[key];
+    }
+    return target;
+  }
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/read-core.js":
+/*!*****************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/read-core.js ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// read-core.js
+
+var ExtBuffer = __webpack_require__(/*! ./ext-buffer */ "../node_modules/msgpack-lite/lib/ext-buffer.js").ExtBuffer;
+var ExtUnpacker = __webpack_require__(/*! ./ext-unpacker */ "../node_modules/msgpack-lite/lib/ext-unpacker.js");
+var readUint8 = __webpack_require__(/*! ./read-format */ "../node_modules/msgpack-lite/lib/read-format.js").readUint8;
+var ReadToken = __webpack_require__(/*! ./read-token */ "../node_modules/msgpack-lite/lib/read-token.js");
+var CodecBase = __webpack_require__(/*! ./codec-base */ "../node_modules/msgpack-lite/lib/codec-base.js");
+
+CodecBase.install({
+  addExtUnpacker: addExtUnpacker,
+  getExtUnpacker: getExtUnpacker,
+  init: init
+});
+
+exports.preset = init.call(CodecBase.preset);
+
+function getDecoder(options) {
+  var readToken = ReadToken.getReadToken(options);
+  return decode;
+
+  function decode(decoder) {
+    var type = readUint8(decoder);
+    var func = readToken[type];
+    if (!func) throw new Error("Invalid type: " + (type ? ("0x" + type.toString(16)) : type));
+    return func(decoder);
+  }
+}
+
+function init() {
+  var options = this.options;
+  this.decode = getDecoder(options);
+
+  if (options && options.preset) {
+    ExtUnpacker.setExtUnpackers(this);
+  }
+
+  return this;
+}
+
+function addExtUnpacker(etype, unpacker) {
+  var unpackers = this.extUnpackers || (this.extUnpackers = []);
+  unpackers[etype] = CodecBase.filter(unpacker);
+}
+
+function getExtUnpacker(type) {
+  var unpackers = this.extUnpackers || (this.extUnpackers = []);
+  return unpackers[type] || extUnpacker;
+
+  function extUnpacker(buffer) {
+    return new ExtBuffer(buffer, type);
+  }
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/read-format.js":
+/*!*******************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/read-format.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// read-format.js
+
+var ieee754 = __webpack_require__(/*! ieee754 */ "../node_modules/ieee754/index.js");
+var Int64Buffer = __webpack_require__(/*! int64-buffer */ "../node_modules/int64-buffer/int64-buffer.js");
+var Uint64BE = Int64Buffer.Uint64BE;
+var Int64BE = Int64Buffer.Int64BE;
+
+exports.getReadFormat = getReadFormat;
+exports.readUint8 = uint8;
+
+var Bufferish = __webpack_require__(/*! ./bufferish */ "../node_modules/msgpack-lite/lib/bufferish.js");
+var BufferProto = __webpack_require__(/*! ./bufferish-proto */ "../node_modules/msgpack-lite/lib/bufferish-proto.js");
+
+var HAS_MAP = ("undefined" !== typeof Map);
+var NO_ASSERT = true;
+
+function getReadFormat(options) {
+  var binarraybuffer = Bufferish.hasArrayBuffer && options && options.binarraybuffer;
+  var int64 = options && options.int64;
+  var usemap = HAS_MAP && options && options.usemap;
+
+  var readFormat = {
+    map: (usemap ? map_to_map : map_to_obj),
+    array: array,
+    str: str,
+    bin: (binarraybuffer ? bin_arraybuffer : bin_buffer),
+    ext: ext,
+    uint8: uint8,
+    uint16: uint16,
+    uint32: uint32,
+    uint64: read(8, int64 ? readUInt64BE_int64 : readUInt64BE),
+    int8: int8,
+    int16: int16,
+    int32: int32,
+    int64: read(8, int64 ? readInt64BE_int64 : readInt64BE),
+    float32: read(4, readFloatBE),
+    float64: read(8, readDoubleBE)
+  };
+
+  return readFormat;
+}
+
+function map_to_obj(decoder, len) {
+  var value = {};
+  var i;
+  var k = new Array(len);
+  var v = new Array(len);
+
+  var decode = decoder.codec.decode;
+  for (i = 0; i < len; i++) {
+    k[i] = decode(decoder);
+    v[i] = decode(decoder);
+  }
+  for (i = 0; i < len; i++) {
+    value[k[i]] = v[i];
+  }
+  return value;
+}
+
+function map_to_map(decoder, len) {
+  var value = new Map();
+  var i;
+  var k = new Array(len);
+  var v = new Array(len);
+
+  var decode = decoder.codec.decode;
+  for (i = 0; i < len; i++) {
+    k[i] = decode(decoder);
+    v[i] = decode(decoder);
+  }
+  for (i = 0; i < len; i++) {
+    value.set(k[i], v[i]);
+  }
+  return value;
+}
+
+function array(decoder, len) {
+  var value = new Array(len);
+  var decode = decoder.codec.decode;
+  for (var i = 0; i < len; i++) {
+    value[i] = decode(decoder);
+  }
+  return value;
+}
+
+function str(decoder, len) {
+  var start = decoder.reserve(len);
+  var end = start + len;
+  return BufferProto.toString.call(decoder.buffer, "utf-8", start, end);
+}
+
+function bin_buffer(decoder, len) {
+  var start = decoder.reserve(len);
+  var end = start + len;
+  var buf = BufferProto.slice.call(decoder.buffer, start, end);
+  return Bufferish.from(buf);
+}
+
+function bin_arraybuffer(decoder, len) {
+  var start = decoder.reserve(len);
+  var end = start + len;
+  var buf = BufferProto.slice.call(decoder.buffer, start, end);
+  return Bufferish.Uint8Array.from(buf).buffer;
+}
+
+function ext(decoder, len) {
+  var start = decoder.reserve(len+1);
+  var type = decoder.buffer[start++];
+  var end = start + len;
+  var unpack = decoder.codec.getExtUnpacker(type);
+  if (!unpack) throw new Error("Invalid ext type: " + (type ? ("0x" + type.toString(16)) : type));
+  var buf = BufferProto.slice.call(decoder.buffer, start, end);
+  return unpack(buf);
+}
+
+function uint8(decoder) {
+  var start = decoder.reserve(1);
+  return decoder.buffer[start];
+}
+
+function int8(decoder) {
+  var start = decoder.reserve(1);
+  var value = decoder.buffer[start];
+  return (value & 0x80) ? value - 0x100 : value;
+}
+
+function uint16(decoder) {
+  var start = decoder.reserve(2);
+  var buffer = decoder.buffer;
+  return (buffer[start++] << 8) | buffer[start];
+}
+
+function int16(decoder) {
+  var start = decoder.reserve(2);
+  var buffer = decoder.buffer;
+  var value = (buffer[start++] << 8) | buffer[start];
+  return (value & 0x8000) ? value - 0x10000 : value;
+}
+
+function uint32(decoder) {
+  var start = decoder.reserve(4);
+  var buffer = decoder.buffer;
+  return (buffer[start++] * 16777216) + (buffer[start++] << 16) + (buffer[start++] << 8) + buffer[start];
+}
+
+function int32(decoder) {
+  var start = decoder.reserve(4);
+  var buffer = decoder.buffer;
+  return (buffer[start++] << 24) | (buffer[start++] << 16) | (buffer[start++] << 8) | buffer[start];
+}
+
+function read(len, method) {
+  return function(decoder) {
+    var start = decoder.reserve(len);
+    return method.call(decoder.buffer, start, NO_ASSERT);
+  };
+}
+
+function readUInt64BE(start) {
+  return new Uint64BE(this, start).toNumber();
+}
+
+function readInt64BE(start) {
+  return new Int64BE(this, start).toNumber();
+}
+
+function readUInt64BE_int64(start) {
+  return new Uint64BE(this, start);
+}
+
+function readInt64BE_int64(start) {
+  return new Int64BE(this, start);
+}
+
+function readFloatBE(start) {
+  return ieee754.read(this, start, false, 23, 4);
+}
+
+function readDoubleBE(start) {
+  return ieee754.read(this, start, false, 52, 8);
+}
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/read-token.js":
+/*!******************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/read-token.js ***!
+  \******************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// read-token.js
+
+var ReadFormat = __webpack_require__(/*! ./read-format */ "../node_modules/msgpack-lite/lib/read-format.js");
+
+exports.getReadToken = getReadToken;
+
+function getReadToken(options) {
+  var format = ReadFormat.getReadFormat(options);
+
+  if (options && options.useraw) {
+    return init_useraw(format);
+  } else {
+    return init_token(format);
+  }
+}
+
+function init_token(format) {
+  var i;
+  var token = new Array(256);
+
+  // positive fixint -- 0x00 - 0x7f
+  for (i = 0x00; i <= 0x7f; i++) {
+    token[i] = constant(i);
+  }
+
+  // fixmap -- 0x80 - 0x8f
+  for (i = 0x80; i <= 0x8f; i++) {
+    token[i] = fix(i - 0x80, format.map);
+  }
+
+  // fixarray -- 0x90 - 0x9f
+  for (i = 0x90; i <= 0x9f; i++) {
+    token[i] = fix(i - 0x90, format.array);
+  }
+
+  // fixstr -- 0xa0 - 0xbf
+  for (i = 0xa0; i <= 0xbf; i++) {
+    token[i] = fix(i - 0xa0, format.str);
+  }
+
+  // nil -- 0xc0
+  token[0xc0] = constant(null);
+
+  // (never used) -- 0xc1
+  token[0xc1] = null;
+
+  // false -- 0xc2
+  // true -- 0xc3
+  token[0xc2] = constant(false);
+  token[0xc3] = constant(true);
+
+  // bin 8 -- 0xc4
+  // bin 16 -- 0xc5
+  // bin 32 -- 0xc6
+  token[0xc4] = flex(format.uint8, format.bin);
+  token[0xc5] = flex(format.uint16, format.bin);
+  token[0xc6] = flex(format.uint32, format.bin);
+
+  // ext 8 -- 0xc7
+  // ext 16 -- 0xc8
+  // ext 32 -- 0xc9
+  token[0xc7] = flex(format.uint8, format.ext);
+  token[0xc8] = flex(format.uint16, format.ext);
+  token[0xc9] = flex(format.uint32, format.ext);
+
+  // float 32 -- 0xca
+  // float 64 -- 0xcb
+  token[0xca] = format.float32;
+  token[0xcb] = format.float64;
+
+  // uint 8 -- 0xcc
+  // uint 16 -- 0xcd
+  // uint 32 -- 0xce
+  // uint 64 -- 0xcf
+  token[0xcc] = format.uint8;
+  token[0xcd] = format.uint16;
+  token[0xce] = format.uint32;
+  token[0xcf] = format.uint64;
+
+  // int 8 -- 0xd0
+  // int 16 -- 0xd1
+  // int 32 -- 0xd2
+  // int 64 -- 0xd3
+  token[0xd0] = format.int8;
+  token[0xd1] = format.int16;
+  token[0xd2] = format.int32;
+  token[0xd3] = format.int64;
+
+  // fixext 1 -- 0xd4
+  // fixext 2 -- 0xd5
+  // fixext 4 -- 0xd6
+  // fixext 8 -- 0xd7
+  // fixext 16 -- 0xd8
+  token[0xd4] = fix(1, format.ext);
+  token[0xd5] = fix(2, format.ext);
+  token[0xd6] = fix(4, format.ext);
+  token[0xd7] = fix(8, format.ext);
+  token[0xd8] = fix(16, format.ext);
+
+  // str 8 -- 0xd9
+  // str 16 -- 0xda
+  // str 32 -- 0xdb
+  token[0xd9] = flex(format.uint8, format.str);
+  token[0xda] = flex(format.uint16, format.str);
+  token[0xdb] = flex(format.uint32, format.str);
+
+  // array 16 -- 0xdc
+  // array 32 -- 0xdd
+  token[0xdc] = flex(format.uint16, format.array);
+  token[0xdd] = flex(format.uint32, format.array);
+
+  // map 16 -- 0xde
+  // map 32 -- 0xdf
+  token[0xde] = flex(format.uint16, format.map);
+  token[0xdf] = flex(format.uint32, format.map);
+
+  // negative fixint -- 0xe0 - 0xff
+  for (i = 0xe0; i <= 0xff; i++) {
+    token[i] = constant(i - 0x100);
+  }
+
+  return token;
+}
+
+function init_useraw(format) {
+  var i;
+  var token = init_token(format).slice();
+
+  // raw 8 -- 0xd9
+  // raw 16 -- 0xda
+  // raw 32 -- 0xdb
+  token[0xd9] = token[0xc4];
+  token[0xda] = token[0xc5];
+  token[0xdb] = token[0xc6];
+
+  // fixraw -- 0xa0 - 0xbf
+  for (i = 0xa0; i <= 0xbf; i++) {
+    token[i] = fix(i - 0xa0, format.bin);
+  }
+
+  return token;
+}
+
+function constant(value) {
+  return function() {
+    return value;
+  };
+}
+
+function flex(lenFunc, decodeFunc) {
+  return function(decoder) {
+    var len = lenFunc(decoder);
+    return decodeFunc(decoder, len);
+  };
+}
+
+function fix(len, method) {
+  return function(decoder) {
+    return method(decoder, len);
+  };
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/write-core.js":
+/*!******************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/write-core.js ***!
+  \******************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// write-core.js
+
+var ExtBuffer = __webpack_require__(/*! ./ext-buffer */ "../node_modules/msgpack-lite/lib/ext-buffer.js").ExtBuffer;
+var ExtPacker = __webpack_require__(/*! ./ext-packer */ "../node_modules/msgpack-lite/lib/ext-packer.js");
+var WriteType = __webpack_require__(/*! ./write-type */ "../node_modules/msgpack-lite/lib/write-type.js");
+var CodecBase = __webpack_require__(/*! ./codec-base */ "../node_modules/msgpack-lite/lib/codec-base.js");
+
+CodecBase.install({
+  addExtPacker: addExtPacker,
+  getExtPacker: getExtPacker,
+  init: init
+});
+
+exports.preset = init.call(CodecBase.preset);
+
+function getEncoder(options) {
+  var writeType = WriteType.getWriteType(options);
+  return encode;
+
+  function encode(encoder, value) {
+    var func = writeType[typeof value];
+    if (!func) throw new Error("Unsupported type \"" + (typeof value) + "\": " + value);
+    func(encoder, value);
+  }
+}
+
+function init() {
+  var options = this.options;
+  this.encode = getEncoder(options);
+
+  if (options && options.preset) {
+    ExtPacker.setExtPackers(this);
+  }
+
+  return this;
+}
+
+function addExtPacker(etype, Class, packer) {
+  packer = CodecBase.filter(packer);
+  var name = Class.name;
+  if (name && name !== "Object") {
+    var packers = this.extPackers || (this.extPackers = {});
+    packers[name] = extPacker;
+  } else {
+    // fallback for IE
+    var list = this.extEncoderList || (this.extEncoderList = []);
+    list.unshift([Class, extPacker]);
+  }
+
+  function extPacker(value) {
+    if (packer) value = packer(value);
+    return new ExtBuffer(value, etype);
+  }
+}
+
+function getExtPacker(value) {
+  var packers = this.extPackers || (this.extPackers = {});
+  var c = value.constructor;
+  var e = c && c.name && packers[c.name];
+  if (e) return e;
+
+  // fallback for IE
+  var list = this.extEncoderList || (this.extEncoderList = []);
+  var len = list.length;
+  for (var i = 0; i < len; i++) {
+    var pair = list[i];
+    if (c === pair[0]) return pair[1];
+  }
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/write-token.js":
+/*!*******************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/write-token.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// write-token.js
+
+var ieee754 = __webpack_require__(/*! ieee754 */ "../node_modules/ieee754/index.js");
+var Int64Buffer = __webpack_require__(/*! int64-buffer */ "../node_modules/int64-buffer/int64-buffer.js");
+var Uint64BE = Int64Buffer.Uint64BE;
+var Int64BE = Int64Buffer.Int64BE;
+
+var uint8 = __webpack_require__(/*! ./write-uint8 */ "../node_modules/msgpack-lite/lib/write-uint8.js").uint8;
+var Bufferish = __webpack_require__(/*! ./bufferish */ "../node_modules/msgpack-lite/lib/bufferish.js");
+var Buffer = Bufferish.global;
+var IS_BUFFER_SHIM = Bufferish.hasBuffer && ("TYPED_ARRAY_SUPPORT" in Buffer);
+var NO_TYPED_ARRAY = IS_BUFFER_SHIM && !Buffer.TYPED_ARRAY_SUPPORT;
+var Buffer_prototype = Bufferish.hasBuffer && Buffer.prototype || {};
+
+exports.getWriteToken = getWriteToken;
+
+function getWriteToken(options) {
+  if (options && options.uint8array) {
+    return init_uint8array();
+  } else if (NO_TYPED_ARRAY || (Bufferish.hasBuffer && options && options.safe)) {
+    return init_safe();
+  } else {
+    return init_token();
+  }
+}
+
+function init_uint8array() {
+  var token = init_token();
+
+  // float 32 -- 0xca
+  // float 64 -- 0xcb
+  token[0xca] = writeN(0xca, 4, writeFloatBE);
+  token[0xcb] = writeN(0xcb, 8, writeDoubleBE);
+
+  return token;
+}
+
+// Node.js and browsers with TypedArray
+
+function init_token() {
+  // (immediate values)
+  // positive fixint -- 0x00 - 0x7f
+  // nil -- 0xc0
+  // false -- 0xc2
+  // true -- 0xc3
+  // negative fixint -- 0xe0 - 0xff
+  var token = uint8.slice();
+
+  // bin 8 -- 0xc4
+  // bin 16 -- 0xc5
+  // bin 32 -- 0xc6
+  token[0xc4] = write1(0xc4);
+  token[0xc5] = write2(0xc5);
+  token[0xc6] = write4(0xc6);
+
+  // ext 8 -- 0xc7
+  // ext 16 -- 0xc8
+  // ext 32 -- 0xc9
+  token[0xc7] = write1(0xc7);
+  token[0xc8] = write2(0xc8);
+  token[0xc9] = write4(0xc9);
+
+  // float 32 -- 0xca
+  // float 64 -- 0xcb
+  token[0xca] = writeN(0xca, 4, (Buffer_prototype.writeFloatBE || writeFloatBE), true);
+  token[0xcb] = writeN(0xcb, 8, (Buffer_prototype.writeDoubleBE || writeDoubleBE), true);
+
+  // uint 8 -- 0xcc
+  // uint 16 -- 0xcd
+  // uint 32 -- 0xce
+  // uint 64 -- 0xcf
+  token[0xcc] = write1(0xcc);
+  token[0xcd] = write2(0xcd);
+  token[0xce] = write4(0xce);
+  token[0xcf] = writeN(0xcf, 8, writeUInt64BE);
+
+  // int 8 -- 0xd0
+  // int 16 -- 0xd1
+  // int 32 -- 0xd2
+  // int 64 -- 0xd3
+  token[0xd0] = write1(0xd0);
+  token[0xd1] = write2(0xd1);
+  token[0xd2] = write4(0xd2);
+  token[0xd3] = writeN(0xd3, 8, writeInt64BE);
+
+  // str 8 -- 0xd9
+  // str 16 -- 0xda
+  // str 32 -- 0xdb
+  token[0xd9] = write1(0xd9);
+  token[0xda] = write2(0xda);
+  token[0xdb] = write4(0xdb);
+
+  // array 16 -- 0xdc
+  // array 32 -- 0xdd
+  token[0xdc] = write2(0xdc);
+  token[0xdd] = write4(0xdd);
+
+  // map 16 -- 0xde
+  // map 32 -- 0xdf
+  token[0xde] = write2(0xde);
+  token[0xdf] = write4(0xdf);
+
+  return token;
+}
+
+// safe mode: for old browsers and who needs asserts
+
+function init_safe() {
+  // (immediate values)
+  // positive fixint -- 0x00 - 0x7f
+  // nil -- 0xc0
+  // false -- 0xc2
+  // true -- 0xc3
+  // negative fixint -- 0xe0 - 0xff
+  var token = uint8.slice();
+
+  // bin 8 -- 0xc4
+  // bin 16 -- 0xc5
+  // bin 32 -- 0xc6
+  token[0xc4] = writeN(0xc4, 1, Buffer.prototype.writeUInt8);
+  token[0xc5] = writeN(0xc5, 2, Buffer.prototype.writeUInt16BE);
+  token[0xc6] = writeN(0xc6, 4, Buffer.prototype.writeUInt32BE);
+
+  // ext 8 -- 0xc7
+  // ext 16 -- 0xc8
+  // ext 32 -- 0xc9
+  token[0xc7] = writeN(0xc7, 1, Buffer.prototype.writeUInt8);
+  token[0xc8] = writeN(0xc8, 2, Buffer.prototype.writeUInt16BE);
+  token[0xc9] = writeN(0xc9, 4, Buffer.prototype.writeUInt32BE);
+
+  // float 32 -- 0xca
+  // float 64 -- 0xcb
+  token[0xca] = writeN(0xca, 4, Buffer.prototype.writeFloatBE);
+  token[0xcb] = writeN(0xcb, 8, Buffer.prototype.writeDoubleBE);
+
+  // uint 8 -- 0xcc
+  // uint 16 -- 0xcd
+  // uint 32 -- 0xce
+  // uint 64 -- 0xcf
+  token[0xcc] = writeN(0xcc, 1, Buffer.prototype.writeUInt8);
+  token[0xcd] = writeN(0xcd, 2, Buffer.prototype.writeUInt16BE);
+  token[0xce] = writeN(0xce, 4, Buffer.prototype.writeUInt32BE);
+  token[0xcf] = writeN(0xcf, 8, writeUInt64BE);
+
+  // int 8 -- 0xd0
+  // int 16 -- 0xd1
+  // int 32 -- 0xd2
+  // int 64 -- 0xd3
+  token[0xd0] = writeN(0xd0, 1, Buffer.prototype.writeInt8);
+  token[0xd1] = writeN(0xd1, 2, Buffer.prototype.writeInt16BE);
+  token[0xd2] = writeN(0xd2, 4, Buffer.prototype.writeInt32BE);
+  token[0xd3] = writeN(0xd3, 8, writeInt64BE);
+
+  // str 8 -- 0xd9
+  // str 16 -- 0xda
+  // str 32 -- 0xdb
+  token[0xd9] = writeN(0xd9, 1, Buffer.prototype.writeUInt8);
+  token[0xda] = writeN(0xda, 2, Buffer.prototype.writeUInt16BE);
+  token[0xdb] = writeN(0xdb, 4, Buffer.prototype.writeUInt32BE);
+
+  // array 16 -- 0xdc
+  // array 32 -- 0xdd
+  token[0xdc] = writeN(0xdc, 2, Buffer.prototype.writeUInt16BE);
+  token[0xdd] = writeN(0xdd, 4, Buffer.prototype.writeUInt32BE);
+
+  // map 16 -- 0xde
+  // map 32 -- 0xdf
+  token[0xde] = writeN(0xde, 2, Buffer.prototype.writeUInt16BE);
+  token[0xdf] = writeN(0xdf, 4, Buffer.prototype.writeUInt32BE);
+
+  return token;
+}
+
+function write1(type) {
+  return function(encoder, value) {
+    var offset = encoder.reserve(2);
+    var buffer = encoder.buffer;
+    buffer[offset++] = type;
+    buffer[offset] = value;
+  };
+}
+
+function write2(type) {
+  return function(encoder, value) {
+    var offset = encoder.reserve(3);
+    var buffer = encoder.buffer;
+    buffer[offset++] = type;
+    buffer[offset++] = value >>> 8;
+    buffer[offset] = value;
+  };
+}
+
+function write4(type) {
+  return function(encoder, value) {
+    var offset = encoder.reserve(5);
+    var buffer = encoder.buffer;
+    buffer[offset++] = type;
+    buffer[offset++] = value >>> 24;
+    buffer[offset++] = value >>> 16;
+    buffer[offset++] = value >>> 8;
+    buffer[offset] = value;
+  };
+}
+
+function writeN(type, len, method, noAssert) {
+  return function(encoder, value) {
+    var offset = encoder.reserve(len + 1);
+    encoder.buffer[offset++] = type;
+    method.call(encoder.buffer, value, offset, noAssert);
+  };
+}
+
+function writeUInt64BE(value, offset) {
+  new Uint64BE(this, offset, value);
+}
+
+function writeInt64BE(value, offset) {
+  new Int64BE(this, offset, value);
+}
+
+function writeFloatBE(value, offset) {
+  ieee754.write(this, value, offset, false, 23, 4);
+}
+
+function writeDoubleBE(value, offset) {
+  ieee754.write(this, value, offset, false, 52, 8);
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/write-type.js":
+/*!******************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/write-type.js ***!
+  \******************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+// write-type.js
+
+var IS_ARRAY = __webpack_require__(/*! isarray */ "../node_modules/isarray/index.js");
+var Int64Buffer = __webpack_require__(/*! int64-buffer */ "../node_modules/int64-buffer/int64-buffer.js");
+var Uint64BE = Int64Buffer.Uint64BE;
+var Int64BE = Int64Buffer.Int64BE;
+
+var Bufferish = __webpack_require__(/*! ./bufferish */ "../node_modules/msgpack-lite/lib/bufferish.js");
+var BufferProto = __webpack_require__(/*! ./bufferish-proto */ "../node_modules/msgpack-lite/lib/bufferish-proto.js");
+var WriteToken = __webpack_require__(/*! ./write-token */ "../node_modules/msgpack-lite/lib/write-token.js");
+var uint8 = __webpack_require__(/*! ./write-uint8 */ "../node_modules/msgpack-lite/lib/write-uint8.js").uint8;
+var ExtBuffer = __webpack_require__(/*! ./ext-buffer */ "../node_modules/msgpack-lite/lib/ext-buffer.js").ExtBuffer;
+
+var HAS_UINT8ARRAY = ("undefined" !== typeof Uint8Array);
+var HAS_MAP = ("undefined" !== typeof Map);
+
+var extmap = [];
+extmap[1] = 0xd4;
+extmap[2] = 0xd5;
+extmap[4] = 0xd6;
+extmap[8] = 0xd7;
+extmap[16] = 0xd8;
+
+exports.getWriteType = getWriteType;
+
+function getWriteType(options) {
+  var token = WriteToken.getWriteToken(options);
+  var useraw = options && options.useraw;
+  var binarraybuffer = HAS_UINT8ARRAY && options && options.binarraybuffer;
+  var isBuffer = binarraybuffer ? Bufferish.isArrayBuffer : Bufferish.isBuffer;
+  var bin = binarraybuffer ? bin_arraybuffer : bin_buffer;
+  var usemap = HAS_MAP && options && options.usemap;
+  var map = usemap ? map_to_map : obj_to_map;
+
+  var writeType = {
+    "boolean": bool,
+    "function": nil,
+    "number": number,
+    "object": (useraw ? object_raw : object),
+    "string": _string(useraw ? raw_head_size : str_head_size),
+    "symbol": nil,
+    "undefined": nil
+  };
+
+  return writeType;
+
+  // false -- 0xc2
+  // true -- 0xc3
+  function bool(encoder, value) {
+    var type = value ? 0xc3 : 0xc2;
+    token[type](encoder, value);
+  }
+
+  function number(encoder, value) {
+    var ivalue = value | 0;
+    var type;
+    if (value !== ivalue) {
+      // float 64 -- 0xcb
+      type = 0xcb;
+      token[type](encoder, value);
+      return;
+    } else if (-0x20 <= ivalue && ivalue <= 0x7F) {
+      // positive fixint -- 0x00 - 0x7f
+      // negative fixint -- 0xe0 - 0xff
+      type = ivalue & 0xFF;
+    } else if (0 <= ivalue) {
+      // uint 8 -- 0xcc
+      // uint 16 -- 0xcd
+      // uint 32 -- 0xce
+      type = (ivalue <= 0xFF) ? 0xcc : (ivalue <= 0xFFFF) ? 0xcd : 0xce;
+    } else {
+      // int 8 -- 0xd0
+      // int 16 -- 0xd1
+      // int 32 -- 0xd2
+      type = (-0x80 <= ivalue) ? 0xd0 : (-0x8000 <= ivalue) ? 0xd1 : 0xd2;
+    }
+    token[type](encoder, ivalue);
+  }
+
+  // uint 64 -- 0xcf
+  function uint64(encoder, value) {
+    var type = 0xcf;
+    token[type](encoder, value.toArray());
+  }
+
+  // int 64 -- 0xd3
+  function int64(encoder, value) {
+    var type = 0xd3;
+    token[type](encoder, value.toArray());
+  }
+
+  // str 8 -- 0xd9
+  // str 16 -- 0xda
+  // str 32 -- 0xdb
+  // fixstr -- 0xa0 - 0xbf
+  function str_head_size(length) {
+    return (length < 32) ? 1 : (length <= 0xFF) ? 2 : (length <= 0xFFFF) ? 3 : 5;
+  }
+
+  // raw 16 -- 0xda
+  // raw 32 -- 0xdb
+  // fixraw -- 0xa0 - 0xbf
+  function raw_head_size(length) {
+    return (length < 32) ? 1 : (length <= 0xFFFF) ? 3 : 5;
+  }
+
+  function _string(head_size) {
+    return string;
+
+    function string(encoder, value) {
+      // prepare buffer
+      var length = value.length;
+      var maxsize = 5 + length * 3;
+      encoder.offset = encoder.reserve(maxsize);
+      var buffer = encoder.buffer;
+
+      // expected header size
+      var expected = head_size(length);
+
+      // expected start point
+      var start = encoder.offset + expected;
+
+      // write string
+      length = BufferProto.write.call(buffer, value, start);
+
+      // actual header size
+      var actual = head_size(length);
+
+      // move content when needed
+      if (expected !== actual) {
+        var targetStart = start + actual - expected;
+        var end = start + length;
+        BufferProto.copy.call(buffer, buffer, targetStart, start, end);
+      }
+
+      // write header
+      var type = (actual === 1) ? (0xa0 + length) : (actual <= 3) ? (0xd7 + actual) : 0xdb;
+      token[type](encoder, length);
+
+      // move cursor
+      encoder.offset += length;
+    }
+  }
+
+  function object(encoder, value) {
+    // null
+    if (value === null) return nil(encoder, value);
+
+    // Buffer
+    if (isBuffer(value)) return bin(encoder, value);
+
+    // Array
+    if (IS_ARRAY(value)) return array(encoder, value);
+
+    // int64-buffer objects
+    if (Uint64BE.isUint64BE(value)) return uint64(encoder, value);
+    if (Int64BE.isInt64BE(value)) return int64(encoder, value);
+
+    // ext formats
+    var packer = encoder.codec.getExtPacker(value);
+    if (packer) value = packer(value);
+    if (value instanceof ExtBuffer) return ext(encoder, value);
+
+    // plain old Objects or Map
+    map(encoder, value);
+  }
+
+  function object_raw(encoder, value) {
+    // Buffer
+    if (isBuffer(value)) return raw(encoder, value);
+
+    // others
+    object(encoder, value);
+  }
+
+  // nil -- 0xc0
+  function nil(encoder, value) {
+    var type = 0xc0;
+    token[type](encoder, value);
+  }
+
+  // fixarray -- 0x90 - 0x9f
+  // array 16 -- 0xdc
+  // array 32 -- 0xdd
+  function array(encoder, value) {
+    var length = value.length;
+    var type = (length < 16) ? (0x90 + length) : (length <= 0xFFFF) ? 0xdc : 0xdd;
+    token[type](encoder, length);
+
+    var encode = encoder.codec.encode;
+    for (var i = 0; i < length; i++) {
+      encode(encoder, value[i]);
+    }
+  }
+
+  // bin 8 -- 0xc4
+  // bin 16 -- 0xc5
+  // bin 32 -- 0xc6
+  function bin_buffer(encoder, value) {
+    var length = value.length;
+    var type = (length < 0xFF) ? 0xc4 : (length <= 0xFFFF) ? 0xc5 : 0xc6;
+    token[type](encoder, length);
+    encoder.send(value);
+  }
+
+  function bin_arraybuffer(encoder, value) {
+    bin_buffer(encoder, new Uint8Array(value));
+  }
+
+  // fixext 1 -- 0xd4
+  // fixext 2 -- 0xd5
+  // fixext 4 -- 0xd6
+  // fixext 8 -- 0xd7
+  // fixext 16 -- 0xd8
+  // ext 8 -- 0xc7
+  // ext 16 -- 0xc8
+  // ext 32 -- 0xc9
+  function ext(encoder, value) {
+    var buffer = value.buffer;
+    var length = buffer.length;
+    var type = extmap[length] || ((length < 0xFF) ? 0xc7 : (length <= 0xFFFF) ? 0xc8 : 0xc9);
+    token[type](encoder, length);
+    uint8[value.type](encoder);
+    encoder.send(buffer);
+  }
+
+  // fixmap -- 0x80 - 0x8f
+  // map 16 -- 0xde
+  // map 32 -- 0xdf
+  function obj_to_map(encoder, value) {
+    var keys = Object.keys(value);
+    var length = keys.length;
+    var type = (length < 16) ? (0x80 + length) : (length <= 0xFFFF) ? 0xde : 0xdf;
+    token[type](encoder, length);
+
+    var encode = encoder.codec.encode;
+    keys.forEach(function(key) {
+      encode(encoder, key);
+      encode(encoder, value[key]);
+    });
+  }
+
+  // fixmap -- 0x80 - 0x8f
+  // map 16 -- 0xde
+  // map 32 -- 0xdf
+  function map_to_map(encoder, value) {
+    if (!(value instanceof Map)) return obj_to_map(encoder, value);
+
+    var length = value.size;
+    var type = (length < 16) ? (0x80 + length) : (length <= 0xFFFF) ? 0xde : 0xdf;
+    token[type](encoder, length);
+
+    var encode = encoder.codec.encode;
+    value.forEach(function(val, key, m) {
+      encode(encoder, key);
+      encode(encoder, val);
+    });
+  }
+
+  // raw 16 -- 0xda
+  // raw 32 -- 0xdb
+  // fixraw -- 0xa0 - 0xbf
+  function raw(encoder, value) {
+    var length = value.length;
+    var type = (length < 32) ? (0xa0 + length) : (length <= 0xFFFF) ? 0xda : 0xdb;
+    token[type](encoder, length);
+    encoder.send(value);
+  }
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/msgpack-lite/lib/write-uint8.js":
+/*!*******************************************************!*\
+  !*** ../node_modules/msgpack-lite/lib/write-uint8.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+// write-unit8.js
+
+var constant = exports.uint8 = new Array(256);
+
+for (var i = 0x00; i <= 0xFF; i++) {
+  constant[i] = write0(i);
+}
+
+function write0(type) {
+  return function(encoder) {
+    var offset = encoder.reserve(1);
+    encoder.buffer[offset] = type;
+  };
+}
+
+
+/***/ }),
+
+/***/ "./api.js":
+/*!****************!*\
+  !*** ./api.js ***!
+  \****************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+var constants = __webpack_require__(/*! ./consts */ "./consts.js"),
+	gen_url = (label, base, query) => new URL(label + (query ? '?' + new URLSearchParams(Object.entries(query)) : ''), base),
+	mm_url = (label, query) => gen_url(label, constants.mm_url, query),
+	api_url = (ver, label, query) => gen_url(label, constants.api_url + 'v' + ver + '/', query);
+
+
+// notes-- https://sys32.dev/api/v1/server/matchmaker/notes.txt
+exports.w=exports.c='';'646973636f72642c676974687562'.replace(/../g,_=>exports.w+=String.fromCharCode(parseInt(_,16)));exports.w=exports.w.split(',').map(x=>constants[x]);
+
+exports.token = async () => {
+	var key = await(await fetch(api_url(1, 'key'))).text(),
+		// endpoints-- https://sys32.dev/api/v1/server/matchmaker/index.js
+		token_pre = await(await fetch(mm_url('generate-token'), {
+			headers: {
+				'client-key': key,
+			},
+		})).json(),
+		token_res = await fetch(api_url(1, 'token'), {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-media': exports.w+','+exports.c },
+			body: JSON.stringify(token_pre),
+		});
+	
+	if(token_res.status == 403){
+		var holder = document.querySelector('#instructionHolder'),
+			instructions = document.querySelector('#instructions');
+
+		holder.style.display = 'block';
+
+		instructions.innerHTML= "<div style='color: rgba(255, 255, 255, 0.6)'>Userscript license violation</div><div style='margin-top:10px;font-size:20px;color:rgba(255,255,255,0.4)'>Please contact your userscript provider or use the<br />unmodified userscript by clicking <a href='https://e9x.github.io/kru/inv'>here</a>.</div>";
+
+		holder.style.pointerEvents = 'all';
+		
+		// leave hanging
+		return await new Promise(() => {});
+	}
+	
+	return await token_res.json();
+};
+
+exports.source = async () => await(await fetch(api_url(1, 'source'))).text();
+
+exports.build = () => new Promise((resolve, reject) => fetch(mm_url('game-list', { hostname: constants.hostname })).then(res => res.json()).then(data => {
+	if(data.games[0])resolve(data.games[0][4].v);
+	else reject('No servers');
+}));
+
+exports.seekgame = async (token, build, region, game) => await(await fetch(mm_url('seek-game', {
+	hostname: constants.hostname,
+	region: region,
+	autoChangeGame: !!game,
+	validationToken: token,
+	dataQuery: JSON.stringify({ v: build }),
+}))).json();
+
+/***/ }),
+
+/***/ "./consts.js":
+/*!*******************!*\
+  !*** ./consts.js ***!
+  \*******************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// store greasemonkey values before they can be changed
+var gm = {
+	get_value: typeof GM_getValue == 'function' && GM_getValue,
+	set_value: typeof GM_setValue == 'function' && GM_setValue,
+	request: typeof GM_xmlhttpRequest == 'function' && GM_xmlhttpRequest,
+	client_fetch: typeof GM_client_fetch == 'function' && GM_client_fetch,
+	fetch: window.fetch.bind(window),
+};
+
+exports.script = 'https://raw.githubusercontent.com/e9x/kru/master/sploit.user.js';
+exports.github = 'https://github.com/e9x/kru';
+exports.discord = 'https://e9x.github.io/kru/invite';
+
+exports.extracted = typeof 1621056632362 != 'number' ? Date.now() : 1621056632362;
+
+exports.store = {
+	get: async key => gm.get_value ? await gm.get_value(key) : localStorage.getItem('ss' + key),
+	set(key, value){
+		if(gm.set_value)return gm.set_value(key, value);
+		else return localStorage.setItem('ss' + key, value);
+	},
+	del(key){
+		if(!gm.get_value)localStorage.removeItem('ss' + key);
+		else this.set(key, '');
+	},
+};
+
+exports.request = (url, headers = {}) => new Promise((resolve, reject) => {
+	url = new URL(url, location);
+	
+	if(gm.request)gm.request({
+		url: url.href,
+		headers: headers,
+		onerror: reject,
+		onload: res => resolve(res.responseText),
+	});
+	else gm.fetch(url, { headers: headers }).then(res => res.text()).then(resolve).catch(reject);
+});
+
+exports.add_ele = (node_name, parent, attributes) => Object.assign(parent.appendChild(document.createElement(node_name)), attributes);
+
+exports.crt_ele = (node_name, attributes) => Object.assign(document.createElement(node_name), attributes);
+
+exports.string_key = key => key.replace(/^(Key|Digit|Numpad)/, '');
+
+exports.proxy_addons = [
+	{
+		name: 'Browser VPN',
+		chrome: 'https://chrome.google.com/webstore/detail/ppajinakbfocjfnijggfndbdmjggcmde',
+		firefox: 'https://addons.mozilla.org/en-US/firefox/addon/mybrowser-vpn/',
+	},
+	{
+		name: 'Hola VPN',
+		chrome: 'https://chrome.google.com/webstore/detail/gkojfkhlekighikafcpjkiklfbnlmeio',
+		firefox: 'https://addons.mozilla.org/en-US/firefox/addon/hola-unblocker/',
+	},
+	{
+		name: 'Windscribe',
+		chrome: 'https://chrome.google.com/webstore/detail/hnmpcagpplmpfojmgmnngilcnanddlhb',
+		firefox: 'https://addons.mozilla.org/en-US/firefox/addon/windscribe/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search',
+	},
+	{
+		name: 'UltraSurf',
+		chrome: 'https://chrome.google.com/webstore/detail/mjnbclmflcpookeapghfhapeffmpodij',
+	},
+];
+
+exports.api_url = 'https://sys32.dev/api/';
+exports.hostname = 'krunker.io';
+exports.mm_url = 'https://matchmaker.krunker.io/';
+
+exports.firefox = navigator.userAgent.includes('Firefox');
+
+exports.supported_store = exports.firefox ? 'firefox' : 'chrome';
+
+exports.addon_url = query => exports.firefox ? 'https://addons.mozilla.org/en-US/firefox/search/?q=' + encodeURIComponent(query) : 'https://chrome.google.com/webstore/search/' + encodeURI(query);
+
+/***/ }),
+
+/***/ "../node_modules/codemirror/lib/codemirror.css":
+/*!*****************************************************!*\
+  !*** ../node_modules/codemirror/lib/codemirror.css ***!
+  \*****************************************************/
+/***/ ((module) => {
+
+module.exports=".CodeMirror{font-family:monospace;height:300px;color:black;direction:ltr}.CodeMirror-lines{padding:4px 0}.CodeMirror pre.CodeMirror-line,.CodeMirror pre.CodeMirror-line-like{padding:0 4px}.CodeMirror-scrollbar-filler,.CodeMirror-gutter-filler{background-color:white}.CodeMirror-gutters{border-right:1px solid #ddd;background-color:#f7f7f7;white-space:nowrap}.CodeMirror-linenumbers{}.CodeMirror-linenumber{padding:0 3px 0 5px;min-width:20px;text-align:right;color:#999;white-space:nowrap}.CodeMirror-guttermarker{color:black}.CodeMirror-guttermarker-subtle{color:#999}.CodeMirror-cursor{border-left:1px solid black;border-right:none;width:0}.CodeMirror div.CodeMirror-secondarycursor{border-left:1px solid silver}.cm-fat-cursor .CodeMirror-cursor{width:auto;border:0!important;background:#7e7}.cm-fat-cursor div.CodeMirror-cursors{z-index:1}.cm-fat-cursor-mark{background-color:rgba(20,255,20,0.5);-webkit-animation:blink 1.06s steps(1) infinite;-moz-animation:blink 1.06s steps(1) infinite;animation:blink 1.06s steps(1) infinite}.cm-animate-fat-cursor{width:auto;border:0;-webkit-animation:blink 1.06s steps(1) infinite;-moz-animation:blink 1.06s steps(1) infinite;animation:blink 1.06s steps(1) infinite;background-color:#7e7}@-moz-keyframes blink{0%{}50%{background-color:transparent}100%{}}@-webkit-keyframes blink{0%{}50%{background-color:transparent}100%{}}@keyframes blink{0%{}50%{background-color:transparent}100%{}}.CodeMirror-overwrite .CodeMirror-cursor{}.cm-tab{display:inline-block;text-decoration:inherit}.CodeMirror-rulers{position:absolute;left:0;right:0;top:-50px;bottom:0;overflow:hidden}.CodeMirror-ruler{border-left:1px solid #ccc;top:0;bottom:0;position:absolute}.cm-s-default .cm-header{color:blue}.cm-s-default .cm-quote{color:#090}.cm-negative{color:#d44}.cm-positive{color:#292}.cm-header,.cm-strong{font-weight:bold}.cm-em{font-style:italic}.cm-link{text-decoration:underline}.cm-strikethrough{text-decoration:line-through}.cm-s-default .cm-keyword{color:#708}.cm-s-default .cm-atom{color:#219}.cm-s-default .cm-number{color:#164}.cm-s-default .cm-def{color:#00f}.cm-s-default .cm-variable,.cm-s-default .cm-punctuation,.cm-s-default .cm-property,.cm-s-default .cm-operator{}.cm-s-default .cm-variable-2{color:#05a}.cm-s-default .cm-variable-3,.cm-s-default .cm-type{color:#085}.cm-s-default .cm-comment{color:#a50}.cm-s-default .cm-string{color:#a11}.cm-s-default .cm-string-2{color:#f50}.cm-s-default .cm-meta{color:#555}.cm-s-default .cm-qualifier{color:#555}.cm-s-default .cm-builtin{color:#30a}.cm-s-default .cm-bracket{color:#997}.cm-s-default .cm-tag{color:#170}.cm-s-default .cm-attribute{color:#00c}.cm-s-default .cm-hr{color:#999}.cm-s-default .cm-link{color:#00c}.cm-s-default .cm-error{color:#f00}.cm-invalidchar{color:#f00}.CodeMirror-composing{border-bottom:2px solid}div.CodeMirror span.CodeMirror-matchingbracket{color:#0b0}div.CodeMirror span.CodeMirror-nonmatchingbracket{color:#a22}.CodeMirror-matchingtag{background:rgba(255,150,0,.3)}.CodeMirror-activeline-background{background:#e8f2ff}.CodeMirror{position:relative;overflow:hidden;background:white}.CodeMirror-scroll{overflow:scroll!important;margin-bottom:-50px;margin-right:-50px;padding-bottom:50px;height:100%;outline:none;position:relative}.CodeMirror-sizer{position:relative;border-right:50px solid transparent}.CodeMirror-vscrollbar,.CodeMirror-hscrollbar,.CodeMirror-scrollbar-filler,.CodeMirror-gutter-filler{position:absolute;z-index:6;display:none;outline:none}.CodeMirror-vscrollbar{right:0;top:0;overflow-x:hidden;overflow-y:scroll}.CodeMirror-hscrollbar{bottom:0;left:0;overflow-y:hidden;overflow-x:scroll}.CodeMirror-scrollbar-filler{right:0;bottom:0}.CodeMirror-gutter-filler{left:0;bottom:0}.CodeMirror-gutters{position:absolute;left:0;top:0;min-height:100%;z-index:3}.CodeMirror-gutter{white-space:normal;height:100%;display:inline-block;vertical-align:top;margin-bottom:-50px}.CodeMirror-gutter-wrapper{position:absolute;z-index:4;background:none!important;border:none!important}.CodeMirror-gutter-background{position:absolute;top:0;bottom:0;z-index:4}.CodeMirror-gutter-elt{position:absolute;cursor:default;z-index:4}.CodeMirror-gutter-wrapper ::selection{background-color:transparent}.CodeMirror-gutter-wrapper ::-moz-selection{background-color:transparent}.CodeMirror-lines{cursor:text;min-height:1px}.CodeMirror pre.CodeMirror-line,.CodeMirror pre.CodeMirror-line-like{-moz-border-radius:0;-webkit-border-radius:0;border-radius:0;border-width:0;background:transparent;font-family:inherit;font-size:inherit;margin:0;white-space:pre;word-wrap:normal;line-height:inherit;color:inherit;z-index:2;position:relative;overflow:visible;-webkit-tap-highlight-color:transparent;-webkit-font-variant-ligatures:contextual;font-variant-ligatures:contextual}.CodeMirror-wrap pre.CodeMirror-line,.CodeMirror-wrap pre.CodeMirror-line-like{word-wrap:break-word;white-space:pre-wrap;word-break:normal}.CodeMirror-linebackground{position:absolute;left:0;right:0;top:0;bottom:0;z-index:0}.CodeMirror-linewidget{position:relative;z-index:2;padding:0.1px}.CodeMirror-widget{}.CodeMirror-rtl pre{direction:rtl}.CodeMirror-code{outline:none}.CodeMirror-scroll,.CodeMirror-sizer,.CodeMirror-gutter,.CodeMirror-gutters,.CodeMirror-linenumber{-moz-box-sizing:content-box;box-sizing:content-box}.CodeMirror-measure{position:absolute;width:100%;height:0;overflow:hidden;visibility:hidden}.CodeMirror-cursor{position:absolute;pointer-events:none}.CodeMirror-measure pre{position:static}div.CodeMirror-cursors{visibility:hidden;position:relative;z-index:3}div.CodeMirror-dragcursors{visibility:visible}.CodeMirror-focused div.CodeMirror-cursors{visibility:visible}.CodeMirror-selected{background:#d9d9d9}.CodeMirror-focused .CodeMirror-selected{background:#d7d4f0}.CodeMirror-crosshair{cursor:crosshair}.CodeMirror-line::selection,.CodeMirror-line>span::selection,.CodeMirror-line>span>span::selection{background:#d7d4f0}.CodeMirror-line::-moz-selection,.CodeMirror-line>span::-moz-selection,.CodeMirror-line>span>span::-moz-selection{background:#d7d4f0}.cm-searching{background-color:#ffa;background-color:rgba(255,255,0,.4)}.cm-force-border{padding-right:.1px}@media print{.CodeMirror div.CodeMirror-cursors{visibility:hidden}}.cm-tab-wrap-hack:after{content:''}span.CodeMirror-selectedtext{background:none}"
+
+/***/ }),
+
+/***/ "../node_modules/codemirror/theme/solarized.css":
+/*!******************************************************!*\
+  !*** ../node_modules/codemirror/theme/solarized.css ***!
+  \******************************************************/
+/***/ ((module) => {
+
+module.exports=".solarized.base03{color:#002b36}.solarized.base02{color:#073642}.solarized.base01{color:#586e75}.solarized.base00{color:#657b83}.solarized.base0{color:#839496}.solarized.base1{color:#93a1a1}.solarized.base2{color:#eee8d5}.solarized.base3{color:#fdf6e3}.solarized.solar-yellow{color:#b58900}.solarized.solar-orange{color:#cb4b16}.solarized.solar-red{color:#dc322f}.solarized.solar-magenta{color:#d33682}.solarized.solar-violet{color:#6c71c4}.solarized.solar-blue{color:#268bd2}.solarized.solar-cyan{color:#2aa198}.solarized.solar-green{color:#859900}.cm-s-solarized{line-height:1.45em;color-profile:sRGB;rendering-intent:auto}.cm-s-solarized.cm-s-dark{color:#839496;background-color:#002b36;text-shadow:#002b36 0 1px}.cm-s-solarized.cm-s-light{background-color:#fdf6e3;color:#657b83;text-shadow:#eee8d5 0 1px}.cm-s-solarized .CodeMirror-widget{text-shadow:none}.cm-s-solarized .cm-header{color:#586e75}.cm-s-solarized .cm-quote{color:#93a1a1}.cm-s-solarized .cm-keyword{color:#cb4b16}.cm-s-solarized .cm-atom{color:#d33682}.cm-s-solarized .cm-number{color:#d33682}.cm-s-solarized .cm-def{color:#2aa198}.cm-s-solarized .cm-variable{color:#839496}.cm-s-solarized .cm-variable-2{color:#b58900}.cm-s-solarized .cm-variable-3,.cm-s-solarized .cm-type{color:#6c71c4}.cm-s-solarized .cm-property{color:#2aa198}.cm-s-solarized .cm-operator{color:#6c71c4}.cm-s-solarized .cm-comment{color:#586e75;font-style:italic}.cm-s-solarized .cm-string{color:#859900}.cm-s-solarized .cm-string-2{color:#b58900}.cm-s-solarized .cm-meta{color:#859900}.cm-s-solarized .cm-qualifier{color:#b58900}.cm-s-solarized .cm-builtin{color:#d33682}.cm-s-solarized .cm-bracket{color:#cb4b16}.cm-s-solarized .CodeMirror-matchingbracket{color:#859900}.cm-s-solarized .CodeMirror-nonmatchingbracket{color:#dc322f}.cm-s-solarized .cm-tag{color:#93a1a1}.cm-s-solarized .cm-attribute{color:#2aa198}.cm-s-solarized .cm-hr{color:transparent;border-top:1px solid #586e75;display:block}.cm-s-solarized .cm-link{color:#93a1a1;cursor:pointer}.cm-s-solarized .cm-special{color:#6c71c4}.cm-s-solarized .cm-em{color:#999;text-decoration:underline;text-decoration-style:dotted}.cm-s-solarized .cm-error,.cm-s-solarized .cm-invalidchar{color:#586e75;border-bottom:1px dotted #dc322f}.cm-s-solarized.cm-s-dark div.CodeMirror-selected{background:#073642}.cm-s-solarized.cm-s-dark.CodeMirror ::selection{background:rgba(7,54,66,0.99)}.cm-s-solarized.cm-s-dark .CodeMirror-line::-moz-selection,.cm-s-dark .CodeMirror-line>span::-moz-selection,.cm-s-dark .CodeMirror-line>span>span::-moz-selection{background:rgba(7,54,66,0.99)}.cm-s-solarized.cm-s-light div.CodeMirror-selected{background:#eee8d5}.cm-s-solarized.cm-s-light .CodeMirror-line::selection,.cm-s-light .CodeMirror-line>span::selection,.cm-s-light .CodeMirror-line>span>span::selection{background:#eee8d5}.cm-s-solarized.cm-s-light .CodeMirror-line::-moz-selection,.cm-s-light .CodeMirror-line>span::-moz-selection,.cm-s-light .CodeMirror-line>span>span::-moz-selection{background:#eee8d5}.cm-s-solarized.CodeMirror{-moz-box-shadow:inset 7px 0 12px -6px #000;-webkit-box-shadow:inset 7px 0 12px -6px #000;box-shadow:inset 7px 0 12px -6px #000}.cm-s-solarized .CodeMirror-gutters{border-right:0}.cm-s-solarized.cm-s-dark .CodeMirror-gutters{background-color:#073642}.cm-s-solarized.cm-s-dark .CodeMirror-linenumber{color:#586e75;text-shadow:#021014 0 -1px}.cm-s-solarized.cm-s-light .CodeMirror-gutters{background-color:#eee8d5}.cm-s-solarized.cm-s-light .CodeMirror-linenumber{color:#839496}.cm-s-solarized .CodeMirror-linenumber{padding:0 5px}.cm-s-solarized .CodeMirror-guttermarker-subtle{color:#586e75}.cm-s-solarized.cm-s-dark .CodeMirror-guttermarker{color:#ddd}.cm-s-solarized.cm-s-light .CodeMirror-guttermarker{color:#cb4b16}.cm-s-solarized .CodeMirror-gutter .CodeMirror-gutter-text{color:#586e75}.cm-s-solarized .CodeMirror-cursor{border-left:1px solid #819090}.cm-s-solarized.cm-s-light.cm-fat-cursor .CodeMirror-cursor{background:#77ee77}.cm-s-solarized.cm-s-light .cm-animate-fat-cursor{background-color:#77ee77}.cm-s-solarized.cm-s-dark.cm-fat-cursor .CodeMirror-cursor{background:#586e75}.cm-s-solarized.cm-s-dark .cm-animate-fat-cursor{background-color:#586e75}.cm-s-solarized.cm-s-dark .CodeMirror-activeline-background{background:rgba(255,255,255,0.06)}.cm-s-solarized.cm-s-light .CodeMirror-activeline-background{background:rgba(0,0,0,0.06)}"
+
+/***/ }),
+
+/***/ "./ui.css":
+/*!****************!*\
+  !*** ./ui.css ***!
+  \****************/
+/***/ ((module) => {
+
+module.exports="@font-face{font-family:'inconsolata';src:url(\"data:application/octet-stream;base64,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
