@@ -7,7 +7,7 @@
 // @license        gpl-3.0
 // @namespace      https://greasyfork.org/users/704479
 // @supportURL     https://e9x.github.io/kru/inv/
-// @extracted      Tue, 08 Jun 2021 01:24:31 GMT
+// @extracted      Fri, 11 Jun 2021 23:55:11 GMT
 // @match          *://krunker.io/*
 // @match          *://*.browserfps.com/*
 // @match          *://linkvertise.com/*
@@ -16,7 +16,7 @@
 // @connect        githubusercontent.com
 // @icon           https://i.imgur.com/pA5e8hy.png
 // @grant          none
-// @noframes
+// @noframes       temp
 // ==/UserScript==
 
 // Donations Accepted
@@ -44,27 +44,36 @@ var Utils = __webpack_require__(/*! ../sploit/libs/utils */ "../sploit/libs/util
 	utils = new Utils();
 
 exports.meta = {
-	discord_code: 'BdyvMgNYnQ',
-	script: 'https://raw.githubusercontent.com/e9x/kru/master/junker.user.js',
-	github: 'https://github.com/e9x/kru',
-	discord: 'https://e9x.github.io/kru/invite',
-	forum: 'https://forum.sys32.dev',
+	script: 'https://y9x.github.io/userscripts/junker.user.js',
+	github: 'https://github.com/e9x/kru/',
+	discord: 'https://y9x.github.io/discord/',
+	forum: 'https://forum.sys32.dev/',
 };
-
-exports.krunker = utils.is_host(location, 'krunker.io', 'browserfps.com') && location.pathname == '/';
 
 exports.api_url = 'https://api.sys32.dev/';
 exports.mm_url = 'https://matchmaker.krunker.io/';
 
-exports.extracted = typeof 1623115471509 != 'number' ? Date.now() : 1623115471509;
+exports.is_frame = window != window.top;
+exports.extracted = typeof 1623455711074 != 'number' ? Date.now() : 1623455711074;
+
+exports.krunker = utils.is_host(location, 'krunker.io', 'browserfps.com') && location.pathname == '/';
 
 var main = new Main(exports.meta),
 	updater = new Updater(exports.meta.script, exports.extracted),
 	api = new API(exports.mm_url, exports.api_url);
 
-if(exports.krunker)api.observe();
+if(!exports.is_frame){
+	if(exports.krunker){
+		// alerts shown prior to the window load event are cancelled
+		if(typeof DO_UPDATES != 'boolean' || DO_UPDATES == true)window.addEventListener('load', () => updater.watch(() => {
+			if(confirm('A new Sploit version is available, do you wish to update?'))updater.update();
+		}, 60e3 * 3));
+		
+		api.observe();
+	}
 
-api.license(exports.meta);
+	api.license(exports.meta, typeof LICENSE_KEY == 'string' && LICENSE_KEY);
+}
 
 exports.main = main
 exports.utils = utils;
@@ -140,37 +149,17 @@ class Main {
 		
 		this.eventHandlers();
 		
-		this.discord = { code: meta.discord_code, guild: {} };
+		this.discord = { guild: {} };
 		
-		utils.request('https://discordapp.com/api/v6/invite/' + this.discord.code + '?with_counts=true', "json", {cache: "no-store"}).then(json => {
-			console.log(json);
-			Object.assign(this.discord, json);
+		fetch(new URL('code.txt', meta.discord), { cache: 'no-store' }).then(async res => {
+			var code = await res.text();
+			
+			this.discord.code = code;
+			
+			Object.assign(this.discord, await(await fetch(`https://discord.com/api/v8/invites/${code}?with_counts=true`)).json());
 		});
 	}
 	onInput(input) {
-		/*var camera = this.renderer && this.renderer.camera;
-		
-		if(camera && !camera.hooked){
-			camera.hooked = true;
-			
-			let prop = 'zoomVal',
-				defined = camera[prop];
-			
-			Object.defineProperty(camera, prop, {
-				get(){
-					return defined;
-				},
-				set(value){
-					if(isNaN(value)){
-						console.trace('NaN', value);
-						debugger;
-					}
-					
-					return defined = value;
-				},
-			});
-		}*/
-		
 		if (!this.settings || !utils.isDefined(this.me)) return input;
 		let isMelee = utils.isDefined(this.me.weapon.melee)&&this.me.weapon.melee||utils.isDefined(this.me.weapon.canThrow)&&this.me.weapon.canThrow;
 		let ammoLeft = this.me[this.vars.ammos][this.me[this.vars.weaponIndex]];
@@ -1678,15 +1667,11 @@ var window = new Function('return this')();
 class API {
 	constructor(matchmaker_url, api_url, storage){
 		this.matchmaker = matchmaker_url,
-		this.api = api_url,
+		this.api = /*CHANGE*/ false ? 0 : api_url,
 		
-		this.similar_stacks = [];
-		
-		if(/*CHANGE*/false){}
+		this.stacks = new Set();
 		
 		this.api_v2 = new URL('v2/', this.api);
-		
-		this.idle = new Promise(() => {});
 		
 		this.default_storage = {
 			get: key => localStorage.getItem('ss' + key),
@@ -1733,11 +1718,11 @@ class API {
 			where: where,
 		};
 		
-		if(this.similar_stacks.includes(err.stack))return;
+		if(this.stacks.has(err.stack))return;
 		
 		console.error('Where:', where, '\nUncaught', err);
 		
-		this.similar_stacks.push(err.stack);
+		this.stacks.add(err.stack);
 		
 		await this.fetch({
 			target: this.api_v2,
@@ -1747,7 +1732,6 @@ class API {
 	}
 	async fetch(input){
 		if(typeof input != 'object' || input == null)throw new TypeError('Input must be a valid object');
-		if(!input.hasOwnProperty('target'))throw new TypeError('Target must be specified');
 		
 		var opts = {
 			cache: 'no-store',
@@ -1764,15 +1748,20 @@ class API {
 			opts.headers['content-type'] = 'application/json';
 		}
 		
+		var result = ['text', 'json', 'arrayBuffer'].includes(input.result) ? input.result : 'text';
+		
+		return await(await fetch(this.resolve(input), opts))[result]();
+	}
+	resolve(input){
+		if(!input.hasOwnProperty('target'))throw new TypeError('Target must be specified');
+		
 		var url = new URL(input.target);
 		
 		if(input.hasOwnProperty('endpoint'))url = new URL(input.endpoint, url);
 		
 		if(typeof input.query == 'object' && input.query != null)url.search = '?' + new URLSearchParams(Object.entries(input.query));
 		
-		var result = ['text', 'json', 'arrayBuffer'].includes(input.result) ? input.result : 'text';
-		
-		return await(await fetch(url, opts))[input.result]();
+		return url;
 	}
 	async source(){
 		await this.meta;
@@ -1814,24 +1803,26 @@ class API {
 	is_host(url, ...hosts){
 		return hosts.some(host => url.hostname == host || url.hostname.endsWith('.' + host));
 	}
-	async license(meta_input){
+	async license(input_meta, input_key){
 		if(this.is_host(location, 'linkvertise.com') && location.pathname.match(/^\/\d+\//))return this.linkvertise();
 		else if(!this.is_host(location, 'krunker.io', 'browserfps.com') || location.pathname != '/')return;
 		
-		var values = [...new URLSearchParams(location.search).values()],
-			set_license = false;
+		var entries = [...new URLSearchParams(location.search).entries()];
 		
-		if(values.length == 1 && !values[0]){
+		if(entries.length == 1 && !entries[0][1]){
 			history.replaceState(null, null, '/');
-			set_license = true;
+			this.storage.set('tgg', entries[0][0]);
 		}
+		
+		var key = input_key || await this.storage.get('tgg');
 		
 		var meta = await this.fetch({
 			target: this.api_v2,
 			endpoint: 'meta',
 			data: {
-				...meta_input,
+				...input_meta,
 				needs_key: true,
+				license: key || null,
 			},
 			result: 'json',
 		});
@@ -1841,18 +1832,9 @@ class API {
 			this.meta_reject();
 		}
 		
-		var ok = () => this.meta_resolve(this.meta = meta);
+		if(!meta.license)return this.meta_resolve(this.meta = meta);
 		
-		if(navigator.userAgent.includes('Electron'))return ok();
-		
-		if(set_license)this.storage.set(meta.license.key, meta.license.value);
-		
-		if(
-			this.default_storage.get('undefined') == meta.license.value ||
-			await this.storage.get(meta.license.key) == meta.license.value
-		)return ok();
-		
-		return location.replace(meta.license.url);
+		return location.replace(meta.license);
 	}
 	linkvertise(){
 		var todor,
@@ -1937,13 +1919,15 @@ class API {
 				
 				on_set(this, 'webService', web => web.webCounter = 0);
 				
-				on_set(this, 'ogadsCountdown', () => {
+				on_set(this, 'link', () => {
 					var oredir = this.redirect;
 					
-					this.redirect = () => {
+					this.link.type = 'DYNAMIC';
+					
+					window.open = this.redirect = () => {
 						redirecting = true;
-						
 						this.link.type = 'DYNAMIC';
+						
 						Promise.all(before_redir).then(() => oredir.call(this));
 					};
 				});
@@ -2003,17 +1987,22 @@ class Updater {
 		this.extracted = extracted;
 		this.show_logs = show_logs;
 		
-		for(var method of ['log', 'warn', 'trace'])this[method] = this.show_logs ? console[method] : (_=>_);
-		
 		this.log('Initialized');
 	}
 	log(...args){
-		if(this.show_logs)console.log('[UPDATER]', ...args);
+		if(this.show_logs)console.info('[UPDATER]', ...args);
+	}
+	warn(...args){
+		if(this.show_logs)console.warn('[UPDATER]', ...args);
 	}
 	parse_headers(script){
-		var out = {};
+		var out = {},
+			close = '==/UserScript==',
+			header = script.slice(0, script.indexOf(close));
 		
-		script.replace(/\/\/ ==UserScript==\n([\s\S]*?)\n\/\/ ==\/UserScript==/, (match, headers) => headers.split('\n').forEach(line => line.replace(/@(\S+)\s+(.*)/, (match, label, value) => out[label] = label in out ? [].concat(out[label], value) : value)));
+		header.replace(/@(\S+)(?: +(.*))?$/gm, (match, label, value) => {
+			out[label] = label in out ? [].concat(out[label], value) : value;
+		});
 		
 		return out;
 	}
@@ -2021,12 +2010,14 @@ class Updater {
 		location.assign(this.script);
 	}
 	async check(){
-		var latest = await(await fetch(this.script)).text();
+		var script = await(await fetch(this.script)).text();
 		
-		this.trace('Latest script fetched from', this.script);
+		this.log('Latest script fetched from', this.script);
 		
-		var parsed = this.parse_headers(latest),
+		var parsed = this.parse_headers(script),
 			latest = new Date(parsed.extracted).getTime();
+		
+		this.log(parsed);
 		
 		this.log('Parsed headers:', parsed, '\nCurrent script:', this.extracted, '\nLatest script:', latest);
 		
@@ -2039,7 +2030,7 @@ class Updater {
 		return will_update;
 	}
 	watch(callback, interval = 60e3 * 3){
-		// interval = 10e3;
+		this.log('Polling at an interval of', interval, 'MS');
 		
 		var run = async () => {
 			if(await this.check())callback();
@@ -2146,14 +2137,14 @@ class Utils {
 			ad = 1 / (d3d * Math.sin(dir - Math.PI) * Math.cos(dist_dir)),
 			ae = 1 / (d3d * Math.cos(dir - Math.PI) * Math.cos(dist_dir)),
 			af = 1 / (d3d * Math.sin(dist_dir)),
-			height = player.y + (player.height || 0) - 1.15; // 1.15 = config.cameraHeight
+			view_y = player.y + (player.height || 0) - 1.15; // 1.15 = config.cameraHeight
 		
 		// iterate through game objects
 		for(var ind in this.game.map.manager.objects){
 			var obj = this.game.map.manager.objects[ind];
 			
 			if(!obj.noShoot && obj.active && (wallbangs ? !obj.penetrable : true)){
-				var in_rect = this.lineInRect(player.x, player.z, height, ad, ae, af, obj.x - Math.max(0, obj.width - offset), obj.z - Math.max(0, obj.length - offset), obj.y - Math.max(0, obj.height - offset), obj.x + Math.max(0, obj.width - offset), obj.z + Math.max(0, obj.length - offset), obj.y + Math.max(0, obj.height - offset));
+				var in_rect = this.lineInRect(player.x, player.z, view_y, ad, ae, af, obj.x - Math.max(0, obj.width - offset), obj.z - Math.max(0, obj.length - offset), obj.y - Math.max(0, obj.height - offset), obj.x + Math.max(0, obj.width - offset), obj.z + Math.max(0, obj.length - offset), obj.y + Math.max(0, obj.height - offset));
 				
 				if(in_rect && 1 > in_rect)return in_rect;
 			}
@@ -2161,7 +2152,7 @@ class Utils {
 		
 		// iterate through game terrain
 		if(this.game.map.terrain){
-			var al = this.game.map.terrain.raycast(player.x, -player.z, height, 1 / ad, -1 / ae, 1 / af);
+			var al = this.game.map.terrain.raycast(player.x, -player.z, view_y, 1 / ad, -1 / ae, 1 / af);
 			if(al)return this.getD3D(player.x, player.y, player.z, al.x, al.z, -al.y);
 		}
 	}
@@ -2199,12 +2190,6 @@ class Utils {
 	add_ele(node_name, parent, attributes){
 		return Object.assign(parent.appendChild(document.createElement(node_name)), attributes);
 	}
-	crt_ele(node_name, attributes){
-		return Object.assign(document.createElement(node_name), attributes);
-	}
-	string_key(key){
-		return key.replace(/^(Key|Digit|Numpad)/, '');
-	}
 	// box = Box3
 	box_size(obj, box){
 		var vFOV = this.world.camera.fov * Math.PI / 180;
@@ -2231,27 +2216,6 @@ class Utils {
 			top: center.y - size.height / 2,
 			bottom: center.y + size.height / 2,
 		};
-	}
-	css(obj){
-		var string = [];
-		
-		for(var name in obj)string.push(name + ':' + obj[name] + ';');
-		
-		return string.join('\n');
-	}
-	sanitize(string){
-		var node = document.createElement('div');
-		
-		node.textContent = string;
-		
-		return node.innerHTML;
-	}
-	unsanitize(string){
-		var node = document.createElement('div');
-		
-		node.innerHTML = string;
-		
-		return node.textContent;
 	}
 	contains_point(point){
 		for(var ind = 0; ind < 6; ind++)if(this.world.frustum.planes[ind].distanceToPoint(point) < 0)return false;
@@ -2395,6 +2359,18 @@ exports.key = key;
 */
 
 exports.keys = { frame: 0, delta: 1, xdir: 2, ydir: 3, moveDir: 4, shoot: 5, scope: 6, jump: 7, reload: 8, crouch: 9, weaponScroll: 10, weaponSwap: 11, moveLock: 12, speed_limit: 13, reset: 14, interact: 15 };
+
+exports.playerHeight = 11;
+exports.cameraHeight = 1.5;
+exports.headScale = 2;
+exports.armScale = 1.1;
+exports.armInset = 0.1;
+exports.chestWidth = 2.5;
+exports.hitBoxPad = 1;
+exports.crouchDst = 1;
+exports.recoilMlt = 0.3;
+exports.nameOffset = 0.6;
+exports.nameOffsetHat = 0.8;
 
 /***/ })
 
