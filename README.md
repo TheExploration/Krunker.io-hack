@@ -8,3 +8,4 @@ If it is not working, wait and I will update
 Put it in tampermonkey
 
 Open the Krunker Settings, click the 'Cheats' tab, choose your cheat flavour and allow it to reload. 
+Press F1 for hack menu.
