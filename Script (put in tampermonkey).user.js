@@ -75,7 +75,7 @@ class ScriptLoader {
                     switch (value) {
                         case 'doge': localStorage.setItem('url', 'https://skidlamer.github.io/obfu/dogeware.js'); break;
                         case 'junk': localStorage.setItem('url', 'https://y9x.github.io/userscripts/serve/junker.user.js'); break;
-                        case '': localStorage.setItem('url', 'https://y9x.github.io/userscripts/serve/sploit.user.js'); break;
+			case 'sploit': case'shit': localStorage.setItem('url', 'https://y9x.github.io/userscripts/serve/sploit.user.js'); break;
                         case 'skid': localStorage.setItem('url', 'https://skidlamer.github.io/obfu/skidfest.js'); break;
                         default: localStorage.setItem('url', value); break;
                     }
