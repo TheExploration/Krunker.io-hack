@@ -5,7 +5,7 @@ Krunker.io hack
 
 If it is not working, wait and I will update
 
-Put it in tampermonkey
+Put it in tampermonkey (A easy way to install is to click the "Raw" button with tampermonkey installed)
 
 Open the Krunker Settings, click the 'Cheats' tab, choose your cheat flavour and allow it to reload. 
 
