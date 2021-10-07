@@ -1,5 +1,5 @@
 # Krunker.io-hack working
-Krunker.io hack
+Krunker.io hack (READ)
 
 !!NOT BY ME!!  I am just posting whatever hack that works here.
 
