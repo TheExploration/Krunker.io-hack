@@ -2,15 +2,17 @@
 Krunker.io hack (READ)
 
 !!NOT BY ME!!  I am just posting whatever hack that works here.
-
 If it is not working, wait and I will update
 
+Tampermonkey does not work anymore krunker has blocked tampermonkey.
+
+
 ### Installation
-Grab a copy of the latest Krunker Lext release (under assets, Lext.vX.XX.zip) from the releases website
-Go to chrome://extensions (In your address bar, type in this URL)
-Verify the Developer mode switch is enabled
-Drag Lext.vX.zip over the extensions page
-All done. Visit Krunker.
+1. Grab a copy of the latest Krunker Lext release (under assets, Lext.vX.XX.zip) from the releases website
+2. Go to chrome://extensions (In your address bar, type in this URL)
+3. Verify the Developer mode switch is enabled
+4. Drag Lext.vX.zip over the extensions page
+5. All done. Visit Krunker.
 
 ### Usage
 1. Open Krunker Settings
