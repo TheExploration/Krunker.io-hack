@@ -1,7 +1,7 @@
 # Krunker.io-hack working
 Krunker.io hack (READ)
 
-!!NOT BY ME!!  I am just posting whatever hack that works here.
+!!NOT BY ME!!  I am just posting whatever hack that works here. (credits in releases)
 If it is not working, wait and I will update
 
 Tampermonkey does not work anymore since krunker has blocked tampermonkey.
