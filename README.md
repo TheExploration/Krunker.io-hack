@@ -13,7 +13,7 @@ Drag Lext.vX.zip over the extensions page
 All done. Visit Krunker.
 
 ### Usage
-Open Krunker Settings
-Click the Cheats tab, you will see a cheat selector
-Choose your cheat flavour
-Allow the page to reload
+1. Open Krunker Settings
+2. Click the Cheats tab, you will see a cheat selector
+3. Choose your cheat flavour
+4. Allow the page to reload
