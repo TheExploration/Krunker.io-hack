@@ -8,7 +8,7 @@ If it is not working, wait and I will update
 
 ## Installation
 1. Install Tampermonkey
-2. Disable all userscripts (they will interfere with the loader)
+2. Disable all userscripts (they might interfere with the loader)
 3. Go to Tampermonkey Dashboard
 4. Click on settings
 5. **Change Config mode to Advanced**
