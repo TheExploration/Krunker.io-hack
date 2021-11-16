@@ -5,7 +5,6 @@ Krunker.io hack (READ)
 
 If it is not working, wait and I will update
 
-All your favorite Krunker Cheats in a single userscript.
 Source
 
 ## Installation
