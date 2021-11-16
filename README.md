@@ -5,7 +5,6 @@ Krunker.io hack (READ)
 
 If it is not working, wait and I will update
 
-Source
 
 ## Installation
 1. Install Tampermonkey
