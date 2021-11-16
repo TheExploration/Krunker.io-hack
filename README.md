@@ -8,7 +8,7 @@ If it is not working, wait and I will update
 All your favorite Krunker Cheats in a single userscript.
 Source
 
-### Installation
+## Installation
 1. Install Tampermonkey
 2. Disable all userscripts (they will interfere with the loader)
 3. Go to Tampermonkey Dashboard
@@ -18,7 +18,7 @@ Source
 7. [Put the userscript into Tampermonkey](https://github.com/disagreeing/Krunker.io-hack/raw/main/Script%20(put%20in%20tampermonkey).user.js)
 8. All done. Visit Krunker.
 
-### Usage
+## Usage
 1. Open Krunker Settings
 2. Click the Cheats tab, you will see a cheat selector
 3. Choose your cheat flavour
