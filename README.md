@@ -6,7 +6,7 @@ Krunker.io hack (READ)
 If it is not working, wait and I will update
 
 
-## Installation
+## Installation (Make sure you do these things)
 1. Install Tampermonkey
 2. Disable all userscripts (they might interfere with the loader)
 3. Go to Tampermonkey Dashboard
