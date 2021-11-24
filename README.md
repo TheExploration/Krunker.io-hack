@@ -9,7 +9,7 @@ If it is not working, wait and I will update
 ## Installation (Make sure you do these things)
 1. Install Tampermonkey
 2. Disable all userscripts (they might interfere with the loader)
-3. Go to Tampermonkey Dashboard
+3. **Go to Tampermonkey Dashboard**
 4. **Click on settings**
 5. **Change Config mode to Advanced**
 6. **Change Inject Mode to Instant**
