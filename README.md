@@ -21,3 +21,4 @@ If it is not working, wait and I will update
 2. Click the Cheats tab, you will see a cheat selector
 3. Choose your cheat flavour
 4. Allow the page to reload
+5. Press F1 to open the hack menu
