@@ -1,5 +1,7 @@
-# Krunker.io-hack working
+# Krunker.io-hack NOT WORKING
 Krunker.io hack (READ)
+
+CURRENTLY NOT WORKING I WILL CHANGE THE TITLE ONCE I FIND A WORKING ONE
 
 !!NOT BY ME!!  I am just posting whatever hack that works here so that people can find it. (current credit: [The Gaming Gurus](https://forum.sys32.dev/d/1-krunker-cheat-loader))
 
