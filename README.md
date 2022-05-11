@@ -13,7 +13,7 @@ If it is not working, wait and I will update
 4. **Click on settings**
 5. **Change Config mode to Advanced**
 6. **Change Inject Mode to Instant**
-7. [Put it into Tampermonkey (u can click this link)](https://github.com/disagreeing/Krunker.io-hack/raw/main/Script%20(put%20in%20tampermonkey).user.js)
+7. [Put it into Tampermonkey (u can click this link)](https://github.com/TheExploration/Krunker.io-hack/raw/main/Script%20(put%20in%20tampermonkey).user.js)
 8. All done. Visit Krunker.
 
 ## Usage
