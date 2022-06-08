@@ -3,8 +3,7 @@ Krunker.io hack (READ)
 
 !!NOT BY ME!!  I am just posting whatever hack that works here so that people can find it. (current credit: [The Gaming Gurus](https://forum.sys32.dev/d/1-krunker-cheat-loader))
 
-If it is not working, wait and I will update
-
+Not gonna be working soon idk why its still working
 
 ## Installation (MAKE SURE YOU DO THESE THINGS!!)
 1. Install Tampermonkey
