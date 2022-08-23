@@ -1,9 +1,8 @@
-# Krunker.io-hack working
+# Krunker.io-hack NOT WORKING
+The End after 2 years. Not updating this anymore. Dunno who is still making Krunker.io scripts but this script is not working anymore and Krunker.io is dead
+
 Krunker.io hack (READ)
 
-!!NOT BY ME!!  I am just posting whatever script that works here so that people can find it. (current credit: [The Gaming Gurus](https://forum.sys32.dev/d/1-krunker-cheat-loader))
-
-Not gonna be working soon idk why its still working
 
 ## Installation (MAKE SURE YOU DO THESE THINGS!!)
 1. Install Tampermonkey
